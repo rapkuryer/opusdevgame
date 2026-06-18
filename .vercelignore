@@ -1,4 +1,7 @@
 # Dev / test — not needed in production
+server.js
+package.json
+package-lock.json
 tools/
 .cursor/
 node_modules/playwright/
