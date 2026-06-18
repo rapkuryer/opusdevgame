@@ -1999,9 +1999,9 @@ const loadTick = setInterval(() => {
 
 const loadTimeout = setTimeout(() => {
   if (planetReady) return;
-  console.warn('Load timeout — forcing PLAY NOW');
-  revealPlayNow();
-}, 30000);
+  setLoadStatus('Still loading world…');
+  setLoadProgress(94);
+}, 45000);
 
 (async () => {
   const t0 = performance.now();
@@ -2056,8 +2056,15 @@ const loadTimeout = setTimeout(() => {
     }).catch((e) => console.warn('Deferred LODs', e));
   } catch (e) {
     console.error('Planet load failed', e);
-    setLoadStatus('Load failed — refresh to retry');
-    revealPlayNow();
+    clearInterval(loadTick);
+    clearTimeout(loadTimeout);
+    setLoadProgress(0);
+    setLoadStatus('Could not load world — check connection and tap RETRY');
+    if (beginBtn) {
+      beginBtn.textContent = 'RETRY';
+      beginBtn.classList.add('show');
+      beginBtn.disabled = false;
+    }
   }
 })();
 let physicsInitPromise = null;
@@ -2115,7 +2122,11 @@ function readPlayerNick() {
 }
 
 function startGame() {
-  abetoPlanet?.setBuildRadius(ASSEMBLY_INNER, ASSEMBLY_OUTER);
+  if (!abetoPlanet) {
+    location.reload();
+    return;
+  }
+  abetoPlanet.setBuildRadius(ASSEMBLY_INNER, ASSEMBLY_OUTER);
   placePlayerSpawn();
   followCam.initFromHeading(ctrl.rotationHorizontal);
 
@@ -2156,7 +2167,12 @@ function startGame() {
 }
 
 beginBtn.onclick = () => {
+  if (!abetoPlanet) {
+    location.reload();
+    return;
+  }
   beginBtn.disabled = true;
+  beginBtn.textContent = 'PLAY NOW';
   readPlayerNick();
   startGame();
   initCharacterPhysics().catch((e) => console.warn('BVH init', e));

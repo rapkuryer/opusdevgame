@@ -415,13 +415,25 @@ export async function loadAbetoPlanet(scene, camera, onProgress) {
   draco.setDecoderPath(DRACO_PATH);
   draco.setWorkerLimit(2);
 
-  const loadDrc = (url) => new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(`Draco timeout: ${url}`)), 20000);
-    draco.load(url, (g) => { clearTimeout(timer); resolve(g); }, undefined, (e) => {
-      clearTimeout(timer);
-      reject(e);
-    });
-  });
+  const DRACO_TIMEOUT_MS = 90000;
+  const loadDrc = async (url, retries = 2) => {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        return await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error(`Draco timeout: ${url}`)), DRACO_TIMEOUT_MS);
+          draco.load(url, (g) => { clearTimeout(timer); resolve(g); }, undefined, (e) => {
+            clearTimeout(timer);
+            reject(e);
+          });
+        });
+      } catch (e) {
+        if (attempt >= retries) throw e;
+        console.warn(`[planet] Draco retry ${attempt + 1}/${retries} for ${url}`);
+        await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+      }
+    }
+    return null;
+  };
 
   /** Draco WASM deadlocks when 15+ files decode at once — queue 2 at a time. */
   async function loadDrcBatch(jobs) {
@@ -463,7 +475,7 @@ export async function loadAbetoPlanet(scene, camera, onProgress) {
 
   let noise, noiseBlur, noiseTerrain, waterNoise, waterNoiseBlur;
   try {
-    const ktxTimeout = (p, ms = 8000) => Promise.race([
+    const ktxTimeout = (p, ms = 25000) => Promise.race([
       p,
       new Promise((_, rej) => setTimeout(() => rej(new Error('KTX2 timeout')), ms)),
     ]);

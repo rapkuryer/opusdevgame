@@ -98,15 +98,21 @@ export class Multiplayer {
     }
     this._connecting = true;
     this._updateCount();
-    // Wake Render free-tier instance, then open WebSocket after a short pause.
-    const wake = this.url.replace(/^wss:/, 'https:').replace(/\/ws$/, '/');
-    fetch(wake).catch(() => {}).finally(() => {
+    // Wake relay HTTP health (Render free tier), then open WebSocket after a short pause.
+    const wake = this.url.startsWith('wss://')
+      ? this.url.replace(/^wss:/, 'https:').replace(/\/ws$/, '/')
+      : this.url.startsWith('ws://')
+        ? this.url.replace(/^ws:/, 'http:').replace(/\/ws$/, '/')
+        : null;
+    const afterWake = () => {
       setTimeout(() => {
         if (!this._wantReconnect) return;
         if (this.ws?.readyState === WebSocket.OPEN) return;
         this._openSocket();
       }, 450);
-    });
+    };
+    if (wake) fetch(wake).catch(() => {}).finally(afterWake);
+    else afterWake();
   }
 
   disconnect() {
@@ -146,12 +152,18 @@ export class Multiplayer {
           this._connecting = true;
           this._updateCount();
           this._retryDelay = Math.min(this._retryDelay * 1.6, 20);
-          const wake = this.url.replace(/^wss:/, 'https:').replace(/\/ws$/, '/');
-          fetch(wake).catch(() => {}).finally(() => {
+          const wake = this.url.startsWith('wss://')
+            ? this.url.replace(/^wss:/, 'https:').replace(/\/ws$/, '/')
+            : this.url.startsWith('ws://')
+              ? this.url.replace(/^ws:/, 'http:').replace(/\/ws$/, '/')
+              : null;
+          const reopen = () => {
             setTimeout(() => {
               if (this._wantReconnect) this._openSocket();
             }, 450);
-          });
+          };
+          if (wake) fetch(wake).catch(() => {}).finally(reopen);
+          else reopen();
         }, this._retryDelay * 1000);
       }
     });
