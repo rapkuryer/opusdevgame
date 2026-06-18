@@ -84,6 +84,7 @@ export class Multiplayer {
     this.remotes = new Map();
     this._sendTimer = 0;
     this._connected = false;
+    this._connecting = false;
     this._wantReconnect = true;
     this._retryDelay = 1;
     this._retryTimer = null;
@@ -95,7 +96,17 @@ export class Multiplayer {
     if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
       return;
     }
-    this._openSocket();
+    this._connecting = true;
+    this._updateCount();
+    // Wake Render free-tier instance, then open WebSocket after a short pause.
+    const wake = this.url.replace(/^wss:/, 'https:').replace(/\/ws$/, '/');
+    fetch(wake).catch(() => {}).finally(() => {
+      setTimeout(() => {
+        if (!this._wantReconnect) return;
+        if (this.ws?.readyState === WebSocket.OPEN) return;
+        this._openSocket();
+      }, 450);
+    });
   }
 
   disconnect() {
@@ -118,22 +129,36 @@ export class Multiplayer {
 
     ws.addEventListener('open', () => {
       this._connected = true;
+      this._connecting = false;
       this._retryDelay = 1;
       this._send({ type: 'hello', nick: this.nick });
       console.log('[net] connected');
+      this._updateCount();
     });
     ws.addEventListener('close', () => {
       this._connected = false;
+      this._connecting = false;
       this.id = null;
       this._clearAll();
+      this._updateCount();
       if (this._wantReconnect) {
         this._retryTimer = setTimeout(() => {
+          this._connecting = true;
+          this._updateCount();
           this._retryDelay = Math.min(this._retryDelay * 1.6, 20);
-          this._openSocket();
+          const wake = this.url.replace(/^wss:/, 'https:').replace(/\/ws$/, '/');
+          fetch(wake).catch(() => {}).finally(() => {
+            setTimeout(() => {
+              if (this._wantReconnect) this._openSocket();
+            }, 450);
+          });
         }, this._retryDelay * 1000);
       }
     });
-    ws.addEventListener('error', () => {});
+    ws.addEventListener('error', () => {
+      this._connecting = false;
+      this._updateCount();
+    });
     ws.addEventListener('message', (ev) => this._onMessage(ev.data));
   }
 
@@ -233,7 +258,7 @@ export class Multiplayer {
 
   _updateCount() {
     const n = this._connected ? this.remotes.size + 1 : 1;
-    this.onCount(n, this._connected);
+    this.onCount(n, this._connected, this._connecting);
   }
 
   update(dt, localState) {

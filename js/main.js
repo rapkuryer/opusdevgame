@@ -8,7 +8,7 @@ import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { PLANET_RADIUS, GRAVITY, JUMP, WALK, RUN, RUN_ANIM_SYNC, CHAR_HEIGHT, MOVE, isMobile, CENTER, MAX_PLAYERS } from './config.js';
 import { Multiplayer, sanitizeNick } from './net.js';
-import { loadPlayerCharacter, warmRemotePool } from './playerCharacter.js';
+import { loadPlayerCharacter, warmRemotePool, isPlayerCharacterReady } from './playerCharacter.js';
 import { loadAbetoPlanet } from './planet.js';
 import { SITE_LINKS } from './siteLinks.js';
 import { createFollowCamera } from './followCamera.js';
@@ -1046,14 +1046,29 @@ window.__player=player;   // debug
 const ENABLE_MULTIPLAYER = true;
 const mp = new Multiplayer({
   scene,
-  onCount(n, online) {
+  onCount(n, online, connecting) {
     const el = document.getElementById('onlineCount');
     if (!el) return;
-    el.textContent = online ? `${n} online` : 'solo';
-    el.classList.toggle('online', online && n > 1);
+    el.classList.remove('online', 'connecting', 'offline');
+    if (connecting) {
+      el.textContent = 'connecting…';
+      el.classList.add('connecting');
+    } else if (online) {
+      el.textContent = `${n} online`;
+      el.classList.toggle('online', n > 1);
+    } else {
+      el.textContent = 'solo';
+      el.classList.add('offline');
+    }
   },
 });
 window.__mp = mp;
+
+function connectMultiplayer() {
+  if (!ENABLE_MULTIPLAYER) return;
+  if (!isPlayerCharacterReady()) return;
+  mp.connect(readPlayerNick());
+}
 
 // --- Capoeira FBX character + animation state machine (idle / run / jump) ---
 let mixer=null, anim={}, getAnimState=()=>'idle', getCurAction=()=>null, setAnimState=()=>{};
@@ -1077,6 +1092,7 @@ const ANIMS=['idle','run','jump'];
     stripInkShells(playerModel);
     if (typeof refreshOutline === 'function') refreshOutline();
     warmRemotePool(MAX_PLAYERS - 1);
+    if (started) connectMultiplayer();
     console.log('Capoeira player + animations loaded:', Object.keys(anim).join(', '));
   }catch(e){ console.warn('FBX player load failed', e); }
 })();
@@ -2117,7 +2133,7 @@ function startGame() {
   clock.start();
   // Animus build-from-blocks: world materializes outward from spawn.
   abetoPlanet?.startAssembly?.(player.position);
-  if (ENABLE_MULTIPLAYER) mp.connect(readPlayerNick());
+  if (ENABLE_MULTIPLAYER) connectMultiplayer();
 
   document.body.classList.add('playing', 'page-flip');
   try { actx = new (window.AudioContext || window.webkitAudioContext)(); startAmbientMusic(); } catch (e) {}

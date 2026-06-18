@@ -66,7 +66,7 @@ const server = http.createServer((req, res) => {
   res.end('opusdev multiplayer relay');
 });
 
-const wss = new WebSocketServer({ server });
+const wss = new WebSocketServer({ server, path: '/ws' });
 
 wss.on('connection', (ws) => {
   ws.id = nextClientId++;

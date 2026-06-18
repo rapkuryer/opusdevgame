@@ -140,18 +140,28 @@
 
   .online-badge {
     display: none;
-    position: absolute;
-    top: 16px;
+    position: fixed;
+    top: 68px;
     right: 16px;
+    z-index: 54;
     padding: 8px 12px;
     font-size: 12px;
     font-weight: 700;
     letter-spacing: 0.04em;
     opacity: 0.72;
+    pointer-events: none;
   }
   .online-badge.online {
     opacity: 1;
     color: #2a5a8a;
+  }
+  .online-badge.connecting {
+    opacity: 0.9;
+    color: #6a5a2a;
+  }
+  .online-badge.offline {
+    opacity: 0.55;
+    color: #8a4a4a;
   }
   body.page-flip-done .online-badge {
     display: block;
