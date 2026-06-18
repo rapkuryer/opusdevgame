@@ -16,10 +16,14 @@ const SEND_DT = 1 / SEND_HZ;
 const LERP_K = 14;
 const MAX_NICK = 16;
 
-export function sanitizeNick(raw) {
-  const s = String(raw || 'Courier').trim().slice(0, MAX_NICK);
+export function getEnteredNick(raw) {
+  const s = String(raw ?? '').trim().slice(0, MAX_NICK);
   const clean = s.replace(/[^\w\s.\-]/g, '').trim();
-  return clean || 'Courier';
+  return clean.length > 0 ? clean : null;
+}
+
+export function sanitizeNick(raw) {
+  return getEnteredNick(raw) || 'Courier';
 }
 
 function makeNameTag(text) {

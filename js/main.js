@@ -7,7 +7,7 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { PLANET_RADIUS, GRAVITY, JUMP, WALK, RUN, RUN_ANIM_SYNC, CHAR_HEIGHT, MOVE, isMobile, CENTER, MAX_PLAYERS } from './config.js';
-import { Multiplayer, sanitizeNick } from './net.js';
+import { Multiplayer, sanitizeNick, getEnteredNick } from './net.js';
 import { loadPlayerCharacter, warmRemotePool, isPlayerCharacterReady } from './playerCharacter.js';
 import { loadAbetoPlanet } from './planet.js';
 import { SITE_LINKS } from './siteLinks.js';
@@ -1067,35 +1067,37 @@ window.__mp = mp;
 function connectMultiplayer() {
   if (!ENABLE_MULTIPLAYER) return;
   if (!isPlayerCharacterReady()) return;
-  mp.connect(readPlayerNick());
+  const nick = readPlayerNick();
+  if (!nick) return;
+  mp.connect(nick);
 }
 
 // --- Capoeira FBX character + animation state machine (idle / run / jump) ---
 let mixer=null, anim={}, getAnimState=()=>'idle', getCurAction=()=>null, setAnimState=()=>{};
 const ANIMS=['idle','run','jump'];
+let characterReady = false;
 
-(async()=>{
-  try{
-    const anisotropy = renderer.capabilities.getMaxAnisotropy?.() ?? 8;
-    const loaded = await loadPlayerCharacter(anisotropy);
-    mixer = loaded.mixer;
-    anim = loaded.anim;
-    setAnimState = loaded.setAnimState;
-    getAnimState = loaded.getState;
-    getCurAction = loaded.getCurAction;
+async function initPlayerCharacter() {
+  const anisotropy = renderer.capabilities.getMaxAnisotropy?.() ?? 8;
+  const loaded = await loadPlayerCharacter(anisotropy);
+  mixer = loaded.mixer;
+  anim = loaded.anim;
+  setAnimState = loaded.setAnimState;
+  getAnimState = loaded.getState;
+  getCurAction = loaded.getCurAction;
 
-    const holdAnchor = loaded.model.userData.holdAnchor;
-    player.remove(playerModel);
-    if (heldParcel) holdAnchor.add(heldParcel);
-    playerModel = loaded.model;
-    player.add(playerModel);
-    stripInkShells(playerModel);
-    if (typeof refreshOutline === 'function') refreshOutline();
-    warmRemotePool(MAX_PLAYERS - 1);
-    if (started) connectMultiplayer();
-    console.log('Capoeira player + animations loaded:', Object.keys(anim).join(', '));
-  }catch(e){ console.warn('FBX player load failed', e); }
-})();
+  const holdAnchor = loaded.model.userData.holdAnchor;
+  player.remove(playerModel);
+  if (heldParcel) holdAnchor.add(heldParcel);
+  playerModel = loaded.model;
+  player.add(playerModel);
+  stripInkShells(playerModel);
+  if (typeof refreshOutline === 'function') refreshOutline();
+  characterReady = true;
+  warmRemotePool(MAX_PLAYERS - 1);
+  console.log('Capoeira player + animations loaded:', Object.keys(anim).join(', '));
+  return loaded;
+}
 function pickJumpAction(hasMovement) {
   return (hasMovement ? anim.jumpRun : anim.jumpIdle) || anim.jumpRun || anim.jumpIdle;
 }
@@ -1967,6 +1969,7 @@ const barFill = document.getElementById('startProgress');
 const beginBtn = document.getElementById('begin');
 const loadStatus = document.getElementById('loadStatus');
 const nickInput = document.getElementById('playerNick');
+const nickHint = document.getElementById('nickHint');
 if (nickInput) nickInput.value = sessionStorage.getItem('opusdev_nick') || '';
 let prog = 0;
 let planetReady = false;
@@ -1999,6 +2002,7 @@ function setLoadStatus(msg) {
 
 function revealPlayNow() {
   if (loadFailed) return;
+  if (!characterReady || !isPlayerCharacterReady()) return;
   planetReady = true;
   setLoadProgress(100);
   clearInterval(loadTick);
@@ -2049,12 +2053,23 @@ loadTimers.push(setTimeout(() => {
   const t0 = performance.now();
   try {
     setLoadStatus('Loading world...');
+    const charPromise = initPlayerCharacter().then(() => {
+      setLoadProgress(Math.max(prog, 90));
+      setLoadStatus('Character ready…');
+    });
+
     abetoPlanet = await loadAbetoPlanet(scene, camera, (p, label) => {
       if (label && !String(label).includes('-skip')) meshesDone++;
-      setLoadProgress(4 + p * 90);
+      setLoadProgress(4 + p * 78);
       setLoadStatus(meshStatus(label));
       if (label) console.log('planet load:', label, Math.round(p * 100) + '%');
     });
+
+    setLoadStatus('Loading character…');
+    await charPromise;
+    if (!characterReady || !playerModel?.userData?.isFBX) {
+      throw new Error('Character load incomplete');
+    }
     setLoadProgress(72);
     abetoPlanet.refreshInk?.();
     stripInkShells(playerModel);
@@ -2099,10 +2114,11 @@ loadTimers.push(setTimeout(() => {
       refreshOutline();
     }).catch((e) => console.warn('Deferred LODs', e));
   } catch (e) {
-    console.error('Planet load failed', e);
+    console.error('Boot failed', e);
     clearInterval(loadTick);
     clearLoadTimers();
     loadFailed = true;
+    characterReady = false;
     setLoadProgress(0);
     setLoadStatus('Could not load world — check connection and tap RETRY');
     if (beginBtn) {
@@ -2157,18 +2173,39 @@ async function initCharacterPhysics() {
 }
 const NICK_STORAGE = 'opusdev_nick';
 
+function clearNickError() {
+  nickInput?.classList.remove('start-nick__input--error');
+  if (nickHint) nickHint.textContent = '';
+}
+
+function showNickError(msg = 'Enter a nickname to play') {
+  nickInput?.classList.add('start-nick__input--error');
+  if (nickHint) nickHint.textContent = msg;
+  nickInput?.focus();
+}
+
 function readPlayerNick() {
-  const el = document.getElementById('playerNick');
-  const v = el?.value?.trim();
-  const nick = sanitizeNick(v || sessionStorage.getItem(NICK_STORAGE) || 'Courier');
+  const nick = getEnteredNick(nickInput?.value);
+  if (!nick) return null;
   sessionStorage.setItem(NICK_STORAGE, nick);
-  if (el && el.value !== nick) el.value = nick;
+  if (nickInput && nickInput.value !== nick) nickInput.value = nick;
   return nick;
 }
+
+nickInput?.addEventListener('input', clearNickError);
 
 function startGame() {
   if (!abetoPlanet) {
     location.reload();
+    return;
+  }
+  if (!characterReady || !playerModel?.userData?.isFBX) {
+    setLoadStatus('Character still loading…');
+    return;
+  }
+  const nick = readPlayerNick();
+  if (!nick) {
+    showNickError();
     return;
   }
   abetoPlanet.setBuildRadius(ASSEMBLY_INNER, ASSEMBLY_OUTER);
@@ -2216,6 +2253,15 @@ beginBtn.onclick = () => {
     location.reload();
     return;
   }
+  if (!characterReady || !playerModel?.userData?.isFBX) {
+    setLoadStatus('Character still loading…');
+    return;
+  }
+  if (!getEnteredNick(nickInput?.value)) {
+    showNickError();
+    return;
+  }
+  clearNickError();
   beginBtn.disabled = true;
   beginBtn.textContent = 'PLAY NOW';
   readPlayerNick();

@@ -19,6 +19,8 @@
   for (i = 0; i < 5; i++) urls.push('assets/planet/hitmesh_' + i + '.drc');
   for (i = 0; i < 10; i++) urls.push('assets/planet/full_' + i + '.drc');
   urls.push('assets/planet/water.drc');
+  urls.push('assets/character/capoeira.fbx');
+  urls.push('assets/anim/breathing_idle.fbx', 'assets/anim/running.fbx', 'assets/anim/jump.fbx', 'assets/anim/jump_running.fbx');
   urls.forEach(function (u) { fetch(u).catch(function () {}); });
 })();
 </script>
@@ -44,7 +46,8 @@
       <p class="start-status" id="loadStatus">Loading world...</p>
       <label class="start-nick" for="playerNick">
         <span>Nickname</span>
-        <input id="playerNick" class="start-nick__input" type="text" maxlength="16" placeholder="Courier" autocomplete="nickname" />
+        <input id="playerNick" class="start-nick__input" type="text" maxlength="16" placeholder="Your nickname" autocomplete="nickname" required />
+        <p id="nickHint" class="start-nick__hint" aria-live="polite"></p>
       </label>
       <button id="begin" class="start-play" type="button">PLAY NOW</button>
     </div>

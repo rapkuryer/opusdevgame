@@ -137,6 +137,17 @@
     background: rgba(255, 255, 255, 0.08);
   }
   .start-nick__input::placeholder { color: rgba(244, 242, 236, 0.35); }
+  .start-nick__input--error {
+    border-color: rgba(255, 120, 100, 0.75);
+    background: rgba(255, 80, 60, 0.08);
+  }
+  .start-nick__hint {
+    margin: 0;
+    min-height: 16px;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: rgba(255, 140, 120, 0.9);
+  }
 
   .online-badge {
     display: none;
