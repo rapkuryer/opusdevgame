@@ -49,10 +49,42 @@ function initSiteFooter() {
   if (!footer) return;
   const tw = footer.querySelector('[data-link="twitter"]');
   const gh = footer.querySelector('[data-link="github"]');
+  const pf = footer.querySelector('[data-link="pumpfun"]');
   if (tw) tw.href = SITE_LINKS.twitter;
   if (gh) gh.href = SITE_LINKS.github;
+  if (pf) pf.href = SITE_LINKS.pumpfun;
+  document.querySelectorAll('#infoPanel [data-link="twitter"]').forEach((el) => {
+    el.href = SITE_LINKS.twitter;
+  });
+  document.querySelectorAll('#infoPanel [data-link="github"]').forEach((el) => {
+    el.href = SITE_LINKS.github;
+  });
 }
+
+function initInfoPanel() {
+  const btn = document.getElementById('btnInfo');
+  const panel = document.getElementById('infoPanel');
+  const close = document.getElementById('infoClose');
+  if (!btn || !panel) return;
+
+  const setOpen = (open) => {
+    panel.classList.toggle('show', open);
+    panel.setAttribute('aria-hidden', open ? 'false' : 'true');
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  };
+
+  btn.addEventListener('click', () => setOpen(!panel.classList.contains('show')));
+  close?.addEventListener('click', () => setOpen(false));
+  panel.addEventListener('click', (e) => {
+    if (e.target === panel) setOpen(false);
+  });
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && panel.classList.contains('show')) setOpen(false);
+  });
+}
+
 initSiteFooter();
+initInfoPanel();
 
 let skyDome = null;
 const skyUniforms = createSkyUniforms();
@@ -2062,12 +2094,10 @@ const loadTimeout = setTimeout(() => {
     walkable = abetoPlanet.walkable;
     placePlayerSpawn();
     followCam.initFromHeading(ctrl.rotationHorizontal);
-    setLoadProgress(82);
-
-    await initCharacterPhysics();
     setLoadProgress(96);
 
     revealPlayNow();
+    initCharacterPhysics().catch((e) => console.warn('BVH preload', e));
     console.log('World ready in', ((performance.now() - t0) / 1000).toFixed(1), 's, radius ≈', worldRadius.toFixed(2));
     window.__planetRadius = worldRadius;
     window.__abetoPlanet = abetoPlanet;
@@ -2078,6 +2108,7 @@ const loadTimeout = setTimeout(() => {
     }).catch((e) => console.warn('Deferred LODs', e));
   } catch (e) {
     console.error('Planet load failed', e);
+    setLoadStatus('Load failed — refresh to retry');
     revealPlayNow();
   }
 })();
@@ -2124,30 +2155,50 @@ async function initCharacterPhysics() {
 
   return physicsInitPromise;
 }
-beginBtn.onclick = async () => {
-  try {
-    beginBtn.disabled = true;
-    await initCharacterPhysics();
-    abetoPlanet?.setBuildRadius(ASSEMBLY_INNER, ASSEMBLY_OUTER);
-    placePlayerSpawn();
-    followCam.initFromHeading(ctrl.rotationHorizontal);
+function startGame() {
+  abetoPlanet?.setBuildRadius(ASSEMBLY_INNER, ASSEMBLY_OUTER);
+  placePlayerSpawn();
+  followCam.initFromHeading(ctrl.rotationHorizontal);
 
-    document.body.classList.add('playing');
-    try{ actx=new (window.AudioContext||window.webkitAudioContext)(); startAmbientMusic(); }catch(e){}
-    const l=document.getElementById('loader'); l.style.opacity=0; setTimeout(()=>l.style.display='none',600);
-    player.visible = true;
-    if (playerModel) {
-      playerModel.visible = true;
-      stripInkShells(playerModel);
-      refreshOutline();
-    }
-    started=true; clock.start();
-    // Animus build-from-blocks: world materializes outward from spawn.
-    abetoPlanet?.startAssembly?.(player.position);
-  } catch (e) {
-    console.error('Physics init failed', e);
-    beginBtn.disabled = false;
+  document.getElementById('infoPanel')?.classList.remove('show');
+  document.getElementById('btnInfo')?.setAttribute('aria-expanded', 'false');
+  document.getElementById('infoPanel')?.setAttribute('aria-hidden', 'true');
+
+  player.visible = true;
+  if (playerModel) {
+    playerModel.visible = true;
+    stripInkShells(playerModel);
+    refreshOutline();
   }
+  started = true;
+  clock.start();
+  // Animus build-from-blocks: world materializes outward from spawn.
+  abetoPlanet?.startAssembly?.(player.position);
+
+  document.body.classList.add('playing', 'page-flip');
+  try { actx = new (window.AudioContext || window.webkitAudioContext)(); startAmbientMusic(); } catch (e) {}
+
+  const sheet = document.getElementById('pageSheet');
+  const onFlipEnd = (e) => {
+    if (e.propertyName !== 'transform') return;
+    sheet.removeEventListener('transitionend', onFlipEnd);
+    document.body.classList.add('page-flip-done');
+    document.body.classList.remove('page-flip');
+  };
+  sheet?.addEventListener('transitionend', onFlipEnd);
+  setTimeout(() => {
+    if (!document.body.classList.contains('page-flip-done')) {
+      sheet?.removeEventListener('transitionend', onFlipEnd);
+      document.body.classList.add('page-flip-done');
+      document.body.classList.remove('page-flip');
+    }
+  }, 1300);
+}
+
+beginBtn.onclick = () => {
+  beginBtn.disabled = true;
+  startGame();
+  initCharacterPhysics().catch((e) => console.warn('BVH init', e));
 };
 // Debug: toggle the Animus reality-bubble materialization.
 window.__assemblyOn = () => { abetoPlanet?.startAssembly?.(player.position); return 'assembly on'; };

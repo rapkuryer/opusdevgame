@@ -1,17 +1,34 @@
   :root { --ui-font: 'Nunito', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; height: 100%; overflow: hidden; background: #08080a; font-family: var(--ui-font); }
-  #app { position: fixed; inset: 0; opacity: 0; transition: opacity .9s ease; }
+  #app { position: fixed; inset: 0; opacity: 0; transition: opacity .35s ease; }
   body.playing #app { opacity: 1; }
+  body.page-flip #app { opacity: 1; transition: none; }
   canvas { display: block; }
 
-  /* Start screen — dark minimal (TOLYTOWN-style) */
+  /* Start screen — dark page flips up on PLAY */
   #loader {
-    position: fixed; inset: 0; z-index: 50; display: flex;
-    align-items: center; justify-content: center;
-    background: radial-gradient(ellipse 80% 60% at 50% 42%, #121218 0%, #08080a 62%, #050506 100%);
-    color: #f2f0ec; transition: opacity .7s ease; text-align: center;
+    position: fixed; inset: 0; z-index: 50;
+    perspective: 1300px;
+    pointer-events: none;
+    overflow: hidden;
   }
+  .page-sheet {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(ellipse 80% 60% at 50% 42%, #121218 0%, #08080a 62%, #050506 100%);
+    color: #f2f0ec; text-align: center;
+    transform-origin: 50% 100%;
+    backface-visibility: hidden;
+    pointer-events: auto;
+    transition: transform 1.05s cubic-bezier(0.45, 0.03, 0.18, 1);
+    will-change: transform;
+  }
+  body.page-flip .page-sheet {
+    transform: rotateX(-88deg);
+    pointer-events: none;
+  }
+  body.page-flip-done #loader { display: none; }
   .start-screen {
     display: flex; flex-direction: column; align-items: center;
     gap: 18px; width: min(92vw, 420px); padding: 0 20px;
@@ -83,53 +100,167 @@
   .start-play:active { transform: translateY(1px); }
   .start-play:disabled { opacity: .45; cursor: wait; }
 
-  /* Bottom social links — start screen + in-game */
+  /* Bottom social links + info — in-game only (hidden on start menu) */
   .site-footer {
     position: fixed;
     left: 0;
     right: 0;
     bottom: 0;
     z-index: 55;
-    display: flex;
+    display: none;
     align-items: center;
-    justify-content: center;
-    gap: 14px;
-    padding: 14px 16px 18px;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 20px 18px;
     pointer-events: none;
+  }
+  body.page-flip-done .site-footer {
+    display: flex;
   }
   .site-link {
     pointer-events: auto;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
-    padding: 8px 14px;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 2px;
-    background: rgba(8, 8, 10, 0.72);
-    color: rgba(244, 242, 236, 0.88);
+    height: 44px;
+    padding: 0 14px;
+    border: 2px solid rgba(60, 90, 140, 0.55);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.94);
+    color: #2a4a7a;
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     text-decoration: none;
-    backdrop-filter: blur(6px);
-    transition: background .2s ease, border-color .2s ease, color .2s ease;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+    transition: background .2s ease, border-color .2s ease, transform .15s ease;
+    box-sizing: border-box;
   }
   .site-link:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.28);
-    color: #f4f2ee;
+    background: #fff;
+    border-color: rgba(60, 90, 140, 0.75);
+    color: #2a4a7a;
   }
+  .site-link:active { transform: scale(0.96); }
   .site-link__icon {
     width: 15px;
     height: 15px;
     flex-shrink: 0;
     opacity: 0.92;
   }
-  body.playing .site-footer .site-link {
-    background: rgba(8, 8, 10, 0.55);
-    border-color: rgba(255, 255, 255, 0.1);
+  .site-link--icon-only {
+    width: 44px;
+    padding: 0;
+    gap: 0;
   }
+  .site-link--icon-only .site-link__icon {
+    width: 16px;
+    height: 16px;
+  }
+  .site-link__icon--pf {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    display: block;
+  }
+
+  /* Info button — top right, in-game only */
+  .info-btn {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 56;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 2px solid rgba(60, 90, 140, 0.55);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.94);
+    color: #2a4a7a;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+    transition: background .2s ease, transform .15s ease;
+  }
+  body.page-flip-done .info-btn {
+    display: flex;
+  }
+  .info-btn:hover { background: #fff; }
+  .info-btn:active { transform: scale(0.96); }
+  .info-btn__icon { width: 22px; height: 22px; }
+
+  /* Info panel — paper checklist style */
+  .info-panel {
+    position: fixed; inset: 0; z-index: 58;
+    display: flex; align-items: flex-start; justify-content: center;
+    padding: 72px 16px 24px;
+    background: rgba(8, 8, 10, 0.45);
+    opacity: 0; pointer-events: none;
+    transition: opacity .22s ease;
+  }
+  .info-panel.show {
+    opacity: 1; pointer-events: auto;
+  }
+  .info-panel__paper {
+    position: relative;
+    width: min(420px, 94vw);
+    max-height: min(78vh, 640px);
+    overflow-y: auto;
+    padding: 22px 22px 18px;
+    background: #f8f6f0;
+    color: #1e1e1e;
+    border: 2px solid #1a1a1a;
+    border-radius: 3px;
+    box-shadow: 6px 8px 0 rgba(0, 0, 0, 0.18);
+    transform: translateY(12px) rotate(-0.4deg);
+    transition: transform .25s ease;
+  }
+  .info-panel.show .info-panel__paper {
+    transform: translateY(0) rotate(-0.4deg);
+  }
+  .info-panel__close {
+    position: absolute; top: 8px; right: 10px;
+    border: 0; background: none; font-size: 26px; line-height: 1;
+    color: #444; cursor: pointer; padding: 4px 8px;
+  }
+  .info-panel__title {
+    margin: 0 0 10px;
+    font-family: 'Barlow Condensed', var(--ui-font);
+    font-size: 28px; font-weight: 300;
+    letter-spacing: 0.2em; text-indent: 0.2em;
+    text-transform: uppercase;
+  }
+  .info-panel__lead {
+    margin: 0 0 16px;
+    font-size: 14px; line-height: 1.5;
+  }
+  .info-panel__section {
+    margin-bottom: 14px;
+  }
+  .info-panel__section h3 {
+    margin: 0 0 6px;
+    font-size: 12px; font-weight: 800;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: #2a4a7a;
+  }
+  .info-panel__section p,
+  .info-panel__section li {
+    margin: 0;
+    font-size: 13px; line-height: 1.45;
+  }
+  .info-panel__section ul {
+    margin: 0; padding-left: 18px;
+  }
+  .info-panel__section li + li { margin-top: 4px; }
+  .info-panel__foot {
+    margin: 14px 0 0;
+    font-size: 12px; opacity: 0.75;
+  }
+  .info-panel__foot a { color: #2a4a7a; font-weight: 700; }
 
   /* HUD */
   #hud { position: fixed; inset: 0; pointer-events: none; z-index: 20; color: #2b2b2b; }
