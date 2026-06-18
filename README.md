@@ -42,6 +42,7 @@ npm start
 - Public docs: [github.com/rapkuryer/opusdev-docs](https://github.com/rapkuryer/opusdev-docs)
 - Developer: [@0pusdev on X](https://x.com/0pusdev)
 - Game: [@gameopusdev on X](https://x.com/gameopusdev)
+- **Coin:** [pump.fun](https://pump.fun/coin/ENfSPZh5tGP9tjKQpJY3FArAq2UN4jn7MYDLQ4dCpump) — `ENfSPZh5tGP9tjKQpJY3FArAq2UN4jn7MYDLQ4dCpump`
 
 ## License
 

@@ -64,6 +64,9 @@ function initSiteFooter() {
   document.querySelectorAll('#infoPanel [data-link="github"]').forEach((el) => {
     el.href = SITE_LINKS.github;
   });
+  document.querySelectorAll('#infoPanel [data-link="pumpfun"]').forEach((el) => {
+    el.href = SITE_LINKS.pumpfun;
+  });
 }
 
 function initInfoPanel() {
