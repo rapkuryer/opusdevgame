@@ -5,7 +5,9 @@ Play in any modern browser — desktop or mobile.
 
 ## Live
 
-Deploy on [Vercel](https://vercel.com) from this repository (`rapkuryer/opusdevgame`).
+**[https://opusdev.org](https://opusdev.org)**
+
+Also deployable from [rapkuryer/opusdevgame](https://github.com/rapkuryer/opusdevgame) on [Vercel](https://vercel.com).
 
 ## Local development
 
@@ -34,6 +36,7 @@ npm start
 
 ## Links
 
+- **Play:** [opusdev.org](https://opusdev.org)
 - Public docs: [github.com/rapkuryer/opusdev-docs](https://github.com/rapkuryer/opusdev-docs)
 - Developer: [@0pusdev on X](https://x.com/0pusdev)
 
