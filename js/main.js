@@ -49,11 +49,11 @@ function initSiteFooter() {
   const tw = footer.querySelector('[data-link="twitter"]');
   const tc = footer.querySelector('[data-link="twitterCoin"]');
   const gh = footer.querySelector('[data-link="github"]');
-  const pf = footer.querySelector('[data-link="pumpfun"]');
+  const pf = footer.querySelectorAll('[data-link="pumpfun"]');
   if (tw) tw.href = SITE_LINKS.twitter;
   if (tc) tc.href = SITE_LINKS.twitterCoin;
   if (gh) gh.href = SITE_LINKS.github;
-  if (pf) pf.href = SITE_LINKS.pumpfun;
+  pf.forEach((el) => { el.href = SITE_LINKS.pumpfun; });
   document.querySelectorAll('#infoPanel [data-link="twitter"]').forEach((el) => {
     el.href = SITE_LINKS.twitter;
   });

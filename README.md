@@ -1,9 +1,19 @@
 # OPUSDEV — Tiny Planet
 
-**OPUSDEV** is a browser 3D exploration game on a tiny stylized planet.  
+**OPUSDEV** is a **Solana-native** browser 3D exploration game on a tiny stylized planet.  
 Built with **Three.js** (WebGL), **three-mesh-bvh** collisions, and cel-shaded rendering — no install, desktop or mobile.
 
 On **PLAY**, the world **materializes block by block** — hills, streets, trees, and buildings fly in and snap together around you as you explore.
+
+## Solana
+
+OPUSDEV is a game on **Solana**. Community token **$OPUSDEV** is on [pump.fun](https://pump.fun/coin/ENfSPZh5tGP9tjKQpJY3FArAq2UN4jn7MYDLQ4dCpump).
+
+- **Mint:** `ENfSPZh5tGP9tjKQpJY3FArAq2UN4jn7MYDLQ4dCpump`
+- **Trade:** [pump.fun/coin/ENfSPZh5…](https://pump.fun/coin/ENfSPZh5tGP9tjKQpJY3FArAq2UN4jn7MYDLQ4dCpump)
+- **Updates:** [@gameopusdev on X](https://x.com/gameopusdev)
+
+Play in the browser — no wallet required to explore. The token is for the community around the game.
 
 ## Live
 
@@ -49,7 +59,7 @@ Up to **10 players** per room — same Capoeira character, nicknames above heads
 - Public docs: [github.com/rapkuryer/opusdev-docs](https://github.com/rapkuryer/opusdev-docs)
 - Developer: [@0pusdev on X](https://x.com/0pusdev)
 - Game: [@gameopusdev on X](https://x.com/gameopusdev)
-- **Coin:** [pump.fun](https://pump.fun/coin/ENfSPZh5tGP9tjKQpJY3FArAq2UN4jn7MYDLQ4dCpump) — `ENfSPZh5tGP9tjKQpJY3FArAq2UN4jn7MYDLQ4dCpump`
+- **Coin (Solana):** [pump.fun](https://pump.fun/coin/ENfSPZh5tGP9tjKQpJY3FArAq2UN4jn7MYDLQ4dCpump) — `$OPUSDEV` · `ENfSPZh5tGP9tjKQpJY3FArAq2UN4jn7MYDLQ4dCpump`
 
 ## License
 

@@ -175,14 +175,76 @@
     bottom: 0;
     z-index: 55;
     display: none;
-    align-items: center;
+    align-items: flex-end;
     justify-content: flex-end;
+    flex-wrap: wrap;
     gap: 10px;
     padding: 14px 20px 18px;
     pointer-events: none;
   }
   body.page-flip-done .site-footer {
     display: flex;
+  }
+
+  .solana-badge {
+    pointer-events: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    height: 44px;
+    padding: 0 14px 0 11px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.96);
+    text-decoration: none;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+    position: relative;
+    isolation: isolate;
+    transition: transform .15s ease, box-shadow .2s ease;
+  }
+  .solana-badge::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #9945FF 0%, #19FB9B 55%, #14F195 100%);
+    z-index: -1;
+  }
+  .solana-badge:hover {
+    box-shadow: 0 6px 18px rgba(153, 69, 255, 0.28);
+    transform: translateY(-1px);
+  }
+  .solana-badge:active { transform: scale(0.97); }
+  .solana-badge__icon {
+    width: 22px;
+    height: 17px;
+    flex-shrink: 0;
+  }
+  .solana-badge__text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+    gap: 2px;
+  }
+  .solana-badge__chain {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, #7c3aed, #0d9488);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .solana-badge__token {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: #1a1538;
+  }
+  @media (max-width: 520px) {
+    .solana-badge__chain { font-size: 8px; letter-spacing: 0.14em; }
+    .solana-badge__token { font-size: 11px; }
+    .solana-badge { padding: 0 10px 0 9px; gap: 8px; }
   }
   .site-link {
     pointer-events: auto;
