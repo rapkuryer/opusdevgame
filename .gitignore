@@ -7,3 +7,4 @@ node_modules/
 .vercel/
 tools/gen_tex.py
 tools/generate_sky.py
+.vercel
