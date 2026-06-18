@@ -1,7 +1,7 @@
 # OPUSDEV — Tiny Planet
 
-Browser WebGL exploration game on a stylized spherical world (Three.js).  
-Play in any modern browser — desktop or mobile.
+**OPUSDEV** is a browser 3D exploration game on a tiny stylized planet.  
+Built with **Three.js** (WebGL), **three-mesh-bvh** collisions, and cel-shaded rendering — no install, desktop or mobile.
 
 ## Live
 

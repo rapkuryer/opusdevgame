@@ -1,7 +1,7 @@
 {
   "name": "opusdev",
   "version": "1.0.0",
-  "description": "OPUSDEV — tiny planet WebGL game (Three.js).",
+  "description": "OPUSDEV — browser 3D game on a tiny planet. Three.js, WebGL, three-mesh-bvh.",
   "type": "module",
   "private": true,
   "scripts": {
