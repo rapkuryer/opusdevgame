@@ -1,7 +1,7 @@
 // Shared Capoeira FBX — local player + cloned remotes (SkeletonUtils, no re-download).
 import * as THREE from 'three';
 import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
-import { SkeletonUtils } from 'three/addons/utils/SkeletonUtils.js';
+import { clone as cloneSkeleton } from 'three/addons/utils/SkeletonUtils.js';
 import { CHAR_HEIGHT } from './config.js';
 import { applyOriginalCharacterMaterials } from './characterMaterial.js';
 
@@ -174,7 +174,7 @@ export async function loadPlayerCharacter(anisotropy = 8) {
 
 function spawnRemoteClone() {
   if (!template) return null;
-  const clone = SkeletonUtils.clone(template.root);
+  const clone = cloneSkeleton(template.root);
   clone.userData = { ...clone.userData, isFBX: true, isRemote: true };
   const mixer = new THREE.AnimationMixer(clone);
   const anim = buildActions(mixer, {
