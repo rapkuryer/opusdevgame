@@ -41,7 +41,7 @@ scene.fog = null;
 // FOV 45 · far 400 (our planet is larger than abeto; sky stays r=55 like messenger).
 const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.2, 400);
 window.__cam=camera;   // debug
-const followCam = createFollowCamera(camera, { dispX: -0.15, dispXRange: Math.PI * 0.62 });
+const followCam = createFollowCamera(camera, { dispXRange: Math.PI * 0.62 });
 
 function initSiteFooter() {
   const footer = document.getElementById('siteFooter');
@@ -1537,9 +1537,11 @@ addEventListener('keydown', e=>{ keys[e.code]=true;
 });
 addEventListener('keyup', e=>{ keys[e.code]=false; if(e.code==='Space') jumpKeyDown=false; });
 
-// Курсор: горизонталь — delta-орбита 360°, вертикаль — parallax по Y
+// Курсор: горизонталь — delta-орбита 360°, экранный parallax как в abeto
+let mNX = 0;
 let mNY = 0;
 addEventListener('mousemove', (e) => {
+  mNX = (e.clientX / innerWidth) * 2 - 1;
   mNY = (e.clientY / innerHeight) * 2 - 1;
   if (started && e.movementX) followCam.addPointerDeltaX(e.movementX, innerWidth);
 });
@@ -1566,6 +1568,7 @@ function onTouchMove(e){
     } else if(t.identifier===lookId){
       if (lookLastX !== null) followCam.addPointerDeltaX(t.clientX - lookLastX, innerWidth);
       lookLastX = t.clientX;
+      mNX = (t.clientX / innerWidth) * 2 - 1;
       mNY = (t.clientY / innerHeight) * 2 - 1;
     }
   }
@@ -1880,7 +1883,7 @@ function updateWeather(dt, t){
 
 function updateFollowCamera(dt) {
   const ratio = dt * 60;
-  followCam.setPointerParallax(0, mNY, ratio);
+  followCam.setPointerParallax(mNX, mNY, ratio);
   followCam.update({
     player,
     rotationHorizontal: ctrl.rotationHorizontal,

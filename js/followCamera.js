@@ -51,7 +51,7 @@ export function createFollowCamera(camera, opts = {}) {
   const PHI_MAX = Math.PI * 0.75;
 
   const relPos = new THREE.Vector3(...(opts.relativePosition || [0, 1, 5]));
-  const followedMeshOffset = new THREE.Vector3(...(opts.offset || [-0.65, 0, 1]));
+  const followedMeshOffset = new THREE.Vector3(...(opts.offset || [-0.5, 0, 1]));
   const followedMeshOffsetTarget = new THREE.Vector3();
   const followedMeshOffsetDistance = followedMeshOffset.length();
 
@@ -60,17 +60,16 @@ export function createFollowCamera(camera, opts = {}) {
   const sphericalWork = new THREE.Spherical();
   const sphericalBlend = new THREE.Spherical();
 
-  const touchPos = { y: 0 };
+  const touchPos = { x: 0, y: 0 };
   const addDisp = { theta: 0, phi: 0 };
   let orbitYaw = 0;
-  const DISP_X = opts.dispX ?? -0.15;
-  const DISP_Y = opts.dispY ?? -0.05;
+  // abeto baseCamera.displacement.position — screen parallax on shoulder cam
+  const DISP_POS_X = opts.displacement?.[0] ?? -0.075;
+  const DISP_POS_Y = opts.displacement?.[1] ?? -0.05;
   const DISP_X_RANGE = opts.dispXRange ?? Math.PI * 0.62;
-  const DISP_Y_RANGE = opts.dispYRange ?? HALF_PI;
-  // Same feel as cursor parallax: one full-screen horizontal drag ≈ 2*range*|dispX| rad.
-  const LOOK_PER_SCREEN = 2 * DISP_X_RANGE * Math.abs(DISP_X);
+  const LOOK_PER_SCREEN = 2 * DISP_X_RANGE * Math.abs(DISP_POS_X);
   const touchSmooth = 0.1;
-  const lerpPosition = 0.07;
+  const lerpPosition = 0.05;
 
   spherical.setFromVector3(relPos);
   spherical.phi = THREE.MathUtils.clamp(spherical.phi, PHI_MIN, PHI_MAX);
@@ -82,10 +81,10 @@ export function createFollowCamera(camera, opts = {}) {
   const followedMeshTarget = new THREE.Vector3();
 
   const targetLocalLerp = 0.0125;
-  const targetWorldLerp = 0.14;
-  const rotationLerp = 0.028;             // abeto _cameraRotationLerp
+  const targetWorldLerp = 0.175;
+  const rotationLerp = 0.03;
   const sphericalRotLerp = 0.075;
-  const sphericalRotFastLerp = 0.065;     // smooth player follow
+  const sphericalRotFastLerp = 0.3;
   const sphericalRadiusLerp = 0.035;
   const sphericalRadiusCollisionsLerp = 0.35;
   const centeringInactiveLerp = 0.0125;
@@ -143,9 +142,11 @@ export function createFollowCamera(camera, opts = {}) {
     },
 
     setPointerParallax(nx, ny, ratio) {
-      const cy = fit(ny, 1, -1, -DISP_Y_RANGE, DISP_Y_RANGE);
       const f = lerpCoefFPS(touchSmooth, ratio);
-      touchPos.y += (cy - touchPos.y) * f;
+      const tx = fit(nx, -1, 1, -HALF_PI, HALF_PI);
+      const ty = fit(ny, 1, -1, -HALF_PI, HALF_PI);
+      touchPos.x += (tx - touchPos.x) * f;
+      touchPos.y += (ty - touchPos.y) * f;
     },
 
     /** Horizontal look — accumulates for full 360° at the same drag speed as before. */
@@ -257,8 +258,8 @@ export function createFollowCamera(camera, opts = {}) {
       const basePosition = _vE.copy(baseTarget).add(_vC);
 
       const dispT = lerpCoefFPS(lerpPosition, ratio);
-      addDisp.theta += (orbitYaw - addDisp.theta) * dispT;
-      addDisp.phi += (touchPos.y * DISP_Y - addDisp.phi) * dispT;
+      addDisp.theta += ((orbitYaw + touchPos.x * DISP_POS_X) - addDisp.theta) * dispT;
+      addDisp.phi += ((touchPos.y * DISP_POS_Y) - addDisp.phi) * dispT;
 
       _forward.subVectors(basePosition, baseTarget);
       const offLen = _forward.length();
