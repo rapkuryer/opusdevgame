@@ -35,7 +35,7 @@ npm start
 ## Links
 
 - Public docs: [github.com/rapkuryer/opusdev-docs](https://github.com/rapkuryer/opusdev-docs)
-- Developer: [@rapkuryers on X](https://x.com/rapkuryers)
+- Developer: [@0pusdev on X](https://x.com/0pusdev)
 
 ## License
 
