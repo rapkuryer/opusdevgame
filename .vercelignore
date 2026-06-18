@@ -1,0 +1,27 @@
+# Dev / test — not needed in production
+tools/
+.cursor/
+node_modules/playwright/
+node_modules/playwright-core/
+node_modules/@playwright/
+
+# Unused asset bloat (game runs without these; full copies stay in git)
+assets/meshy/
+assets/player_unzip/
+assets/player.glb
+assets/tex/
+assets/houses/
+CastleGuard.fbx
+assets/anim/climb.fbx
+assets/anim/fall.fbx
+assets/anim/happy_idle.fbx
+assets/anim/idle.fbx
+assets/anim/land.fbx
+assets/anim/look_around.fbx
+assets/anim/looking_around.fbx
+assets/anim/run.fbx
+assets/anim/sad_idle.fbx
+assets/anim/vault.fbx
+assets/anim/walk.fbx
+assets/character/Ch19_nonPBR.fbx
+assets/character/Ch20_nonPBR.fbx
