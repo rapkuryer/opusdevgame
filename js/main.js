@@ -58,6 +58,9 @@ function initSiteFooter() {
   document.querySelectorAll('#infoPanel [data-link="twitter"]').forEach((el) => {
     el.href = SITE_LINKS.twitter;
   });
+  document.querySelectorAll('#infoPanel [data-link="twitterCoin"]').forEach((el) => {
+    el.href = SITE_LINKS.twitterCoin;
+  });
   document.querySelectorAll('#infoPanel [data-link="github"]').forEach((el) => {
     el.href = SITE_LINKS.github;
   });
