@@ -10,6 +10,14 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@200;300&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="css/style.css" />
+<script>
+(function () {
+  var h = location.hostname;
+  if (h === 'opusdev.org' || h === 'www.opusdev.org' || h.endsWith('.vercel.app')) {
+    window.__WS_URL = 'wss://opusdev-ws.onrender.com';
+  }
+})();
+</script>
 </head>
 <body>
 <div id="app"></div>
@@ -22,6 +30,10 @@
         <div class="start-progress" id="startProgress"></div>
       </div>
       <p class="start-status" id="loadStatus">Loading world...</p>
+      <label class="start-nick" for="playerNick">
+        <span>Nickname</span>
+        <input id="playerNick" class="start-nick__input" type="text" maxlength="16" placeholder="Courier" autocomplete="nickname" />
+      </label>
       <button id="begin" class="start-play" type="button">PLAY NOW</button>
     </div>
   </div>
@@ -43,6 +55,10 @@
     <button id="infoClose" class="info-panel__close" type="button" aria-label="Close">×</button>
     <h2 id="infoTitle" class="info-panel__title">OPUSDEV</h2>
     <p class="info-panel__lead">Browser 3D game on a tiny stylized planet — built with Three.js (WebGL) and three-mesh-bvh. Play at <a href="https://opusdev.org" target="_blank" rel="noopener noreferrer">opusdev.org</a>, no install.</p>
+    <section class="info-panel__section">
+      <h3>Multiplayer</h3>
+      <p>Up to 10 players per room — same Capoeira character, nicknames above heads. Connect from anywhere.</p>
+    </section>
     <section class="info-panel__section">
       <h3>World build</h3>
       <p>Hit PLAY and the planet assembles around you — terrain, city, and foliage materialize from tumbling blocks in a shader-driven reality bubble.</p>
@@ -91,6 +107,7 @@
 </footer>
 
 <div id="hud">
+  <div id="onlineCount" class="card online-badge">solo</div>
   <div id="deliveries" class="card">📦 Deliveries <span class="pill"><span id="dcount">0</span>/5</span></div>
   <div id="weather" class="card" style="position:absolute;top:62px;left:16px;padding:8px 14px;font-weight:800;font-size:14px;display:flex;gap:6px;align-items:center"><span id="wIcon">☀️</span><span id="wName">Clear</span></div>
   <div id="compass" class="card"><span class="arrow">🧭</span></div>

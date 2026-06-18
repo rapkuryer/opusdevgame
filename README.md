@@ -19,7 +19,14 @@ npm start
 # open http://localhost:8080
 ```
 
-## Controls
+## Multiplayer
+
+Up to **10 players** per room — same Capoeira character, nicknames above heads.
+
+- **Local:** `npm start` → game + WebSocket relay on one port (`http://localhost:8080`)
+- **Production:** static site on Vercel + WebSocket relay on [Render](https://render.com) (`relay/`, see `render.yaml`)
+- Set `window.__WS_URL` in `index.html` to your relay URL (`wss://…`)
+
 
 - **WASD** — move
 - **Mouse** — look around (360°)

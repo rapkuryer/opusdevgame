@@ -31,5 +31,9 @@ export const CENTER = new THREE.Vector3(0, 0, 0);
 
 // Multiplayer
 export const MAX_PLAYERS = 10;     // per room, matching the reference's cap
-// WebSocket endpoint — same host/port as the page, ws:// or wss:// automatically.
-export const WS_URL = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host;
+// WebSocket endpoint — same host locally; production sets window.__WS_URL in index.html.
+export const WS_URL = (() => {
+  if (typeof window !== 'undefined' && window.__WS_URL) return window.__WS_URL;
+  const host = (typeof window !== 'undefined' && window.__WS_HOST) || location.host;
+  return (location.protocol === 'https:' ? 'wss://' : 'ws://') + host;
+})();

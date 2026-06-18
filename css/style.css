@@ -100,6 +100,63 @@
   .start-play:active { transform: translateY(1px); }
   .start-play:disabled { opacity: .45; cursor: wait; }
 
+  .start-nick {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: min(280px, 78vw);
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity .5s ease .08s, transform .3s ease .08s;
+  }
+  .start-nick.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .start-nick > span {
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(244, 242, 236, 0.5);
+  }
+  .start-nick__input {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #f4f2ee;
+    font-family: inherit;
+    font-size: 15px;
+    text-align: center;
+    outline: none;
+  }
+  .start-nick__input:focus {
+    border-color: rgba(255, 255, 255, 0.34);
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .start-nick__input::placeholder { color: rgba(244, 242, 236, 0.35); }
+
+  .online-badge {
+    display: none;
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    opacity: 0.72;
+  }
+  .online-badge.online {
+    opacity: 1;
+    color: #2a5a8a;
+  }
+  body.page-flip-done .online-badge {
+    display: block;
+  }
+
   /* Bottom social links + info — in-game only (hidden on start menu) */
   .site-footer {
     position: fixed;

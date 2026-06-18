@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: opusdev-ws
+    runtime: node
+    rootDir: relay
+    buildCommand: npm install
+    startCommand: npm start
+    plan: free
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: "20"

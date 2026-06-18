@@ -1,21 +1,20 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
-import { PLANET_RADIUS, GRAVITY, JUMP, WALK, RUN, RUN_ANIM_SYNC, CHAR_HEIGHT, MOVE, isMobile, CENTER } from './config.js';
-import { Multiplayer } from './net.js';
+import { PLANET_RADIUS, GRAVITY, JUMP, WALK, RUN, RUN_ANIM_SYNC, CHAR_HEIGHT, MOVE, isMobile, CENTER, MAX_PLAYERS } from './config.js';
+import { Multiplayer, sanitizeNick } from './net.js';
+import { loadPlayerCharacter, warmRemotePool } from './playerCharacter.js';
 import { loadAbetoPlanet } from './planet.js';
 import { SITE_LINKS } from './siteLinks.js';
 import { createFollowCamera } from './followCamera.js';
 import { CharacterPhysics } from './characterPhysics.js';
 import { tuneDirectionalShadow, setupColorMap } from './graphics.js';
 import { createToonGradient, syncWorldAtmosphere } from './worldGraphics.js';
-import { applyOriginalCharacterMaterials } from './characterMaterial.js';
 import { createSkyDome, createSkyUniforms } from './skyDome.js';
 import { createWaterDepthPass, syncWaterSceneUniforms } from './waterGraphics.js';
 import { inkify, stripInkShells } from './outline.js';
@@ -1043,129 +1042,46 @@ function updateCharacterLights() {
 }
 window.__player=player;   // debug
 
-// --- Multiplayer: disabled — no procedural constructor avatars in world ---
-const ENABLE_MULTIPLAYER = false;
-function makeRemoteAvatar(){
-  const g = new THREE.Group();
-  g.visible = false;
-  return g;
-}
-const mp = new Multiplayer({ scene, makeAvatar: makeRemoteAvatar });
-if (ENABLE_MULTIPLAYER) mp.connect();
-window.__mp = mp;   // debug
+// --- Multiplayer: Capoeira clones + nicknames over WebSocket relay ---
+const ENABLE_MULTIPLAYER = true;
+const mp = new Multiplayer({
+  scene,
+  onCount(n, online) {
+    const el = document.getElementById('onlineCount');
+    if (!el) return;
+    el.textContent = online ? `${n} online` : 'solo';
+    el.classList.toggle('online', online && n > 1);
+  },
+});
+window.__mp = mp;
 
 // --- Capoeira FBX character + animation state machine (idle / run / jump) ---
-let mixer=null, anim={}, curState='idle', curAction=null;
+let mixer=null, anim={}, getAnimState=()=>'idle', getCurAction=()=>null, setAnimState=()=>{};
 const ANIMS=['idle','run','jump'];
-
-/** Remap Mixamo clip bone names onto the loaded character skeleton. */
-function remapClipBones(clip, root) {
-  if (!clip?.tracks?.length) return clip;
-  const bones = new Set();
-  root.traverse((o) => { if (o.isBone) bones.add(o.name); });
-  const alias = (name) => {
-    if (bones.has(name)) return name;
-    const variants = [
-      name.replace(/^mixamorig:/i, 'mixamorig'),
-      name.replace(/^mixamorig/i, 'mixamorig:'),
-      name.replace(/^Mixamorig:/i, 'mixamorig:'),
-    ];
-    for (const v of variants) if (bones.has(v)) return v;
-    return null;
-  };
-  clip.tracks = clip.tracks.filter((track) => {
-    const bone = track.name.split('.')[0];
-    const mapped = alias(bone);
-    if (!mapped) return false;
-    if (mapped !== bone) track.name = track.name.replace(bone, mapped);
-    return true;
-  });
-  return clip;
-}
 
 (async()=>{
   try{
-    const fbx=new FBXLoader();
-    const load=(u)=>new Promise((res,rej)=>fbx.load(u,res,undefined,rej));
-    const pickClip=(obj)=>obj.animations.find(a=>a.tracks.length>0)||obj.animations[0];
-    const stripRoot=(clip)=>{
-      if(!clip) return clip;
-      clip.tracks=clip.tracks.filter(t=>!/Hips\.position$/i.test(t.name));
-      return clip;
-    };
+    const anisotropy = renderer.capabilities.getMaxAnisotropy?.() ?? 8;
+    const loaded = await loadPlayerCharacter(anisotropy);
+    mixer = loaded.mixer;
+    anim = loaded.anim;
+    setAnimState = loaded.setAnimState;
+    getAnimState = loaded.getState;
+    getCurAction = loaded.getCurAction;
 
-    const charSrc=await load('assets/character/capoeira.fbx');
-    const [idleFbx, runFbx, jumpIdleFbx, jumpRunFbx] = await Promise.all([
-      load('assets/anim/breathing_idle.fbx'),
-      load('assets/anim/running.fbx'),
-      load('assets/anim/jump.fbx'),
-      load('assets/anim/jump_running.fbx'),
-    ]);
-
-    // Mixamo ~178u → messenger kid height (~1.28u, abeto proportion)
-    let bb=new THREE.Box3().setFromObject(charSrc), sz=new THREE.Vector3(); bb.getSize(sz);
-    const s=CHAR_HEIGHT/Math.max(0.001,sz.y); charSrc.scale.setScalar(s);
-    bb=new THREE.Box3().setFromObject(charSrc); const ctr=new THREE.Vector3(); bb.getCenter(ctr);
-    charSrc.position.x-=ctr.x; charSrc.position.z-=ctr.z; charSrc.position.y-=bb.min.y;
-
-    applyOriginalCharacterMaterials(charSrc, {
-      anisotropy: renderer.capabilities.getMaxAnisotropy?.() ?? 8,
-    });
-
-    mixer=new THREE.AnimationMixer(charSrc);
-    const idleClip=stripRoot(remapClipBones(pickClip(idleFbx).clone(), charSrc));
-    const runClip=stripRoot(remapClipBones(pickClip(runFbx).clone(), charSrc));
-    const jumpIdleClip=stripRoot(remapClipBones(pickClip(jumpIdleFbx).clone(), charSrc));
-    const jumpRunClip=stripRoot(remapClipBones(pickClip(jumpRunFbx).clone(), charSrc));
-
-    anim.idle = mixer.clipAction(idleClip);
-    anim.run = mixer.clipAction(runClip);
-    anim.jumpIdle = mixer.clipAction(jumpIdleClip);
-    anim.jumpRun = mixer.clipAction(jumpRunClip);
-    anim.jump = anim.jumpRun;
-    anim.idle.setLoop(THREE.LoopRepeat, Infinity);
-    anim.run.setLoop(THREE.LoopRepeat, Infinity);
-    for (const j of [anim.jumpIdle, anim.jumpRun]) {
-      j.loop = THREE.LoopOnce;
-      j.clampWhenFinished = true;
-    }
-    anim.idle.play(); curAction=anim.idle;
-
-    const holdAnchor=new THREE.Group(); holdAnchor.position.set(0, CHAR_HEIGHT * 0.57, 0.22); charSrc.add(holdAnchor);
-    charSrc.userData={ holdAnchor, isFBX:true, charHeight: CHAR_HEIGHT, headY: CHAR_HEIGHT * 0.88 };
+    const holdAnchor = loaded.model.userData.holdAnchor;
     player.remove(playerModel);
-    if(heldParcel) holdAnchor.add(heldParcel);
-    playerModel=charSrc; player.add(playerModel);
+    if (heldParcel) holdAnchor.add(heldParcel);
+    playerModel = loaded.model;
+    player.add(playerModel);
     stripInkShells(playerModel);
-    if(typeof refreshOutline==='function') refreshOutline();
-    console.log('Capoeira player + animations loaded:', Object.keys(anim).join(', '),
-      'tracks idle/run/jump:', idleClip.tracks.length, runClip.tracks.length,
-      jumpIdleClip.tracks.length, jumpRunClip.tracks.length);
+    if (typeof refreshOutline === 'function') refreshOutline();
+    warmRemotePool(MAX_PLAYERS - 1);
+    console.log('Capoeira player + animations loaded:', Object.keys(anim).join(', '));
   }catch(e){ console.warn('FBX player load failed', e); }
 })();
 function pickJumpAction(hasMovement) {
   return (hasMovement ? anim.jumpRun : anim.jumpIdle) || anim.jumpRun || anim.jumpIdle;
-}
-
-// cross-fade helper for the animation state machine
-function setAnimState(next, fade=0.28, opts={}){
-  if(!mixer) return;
-  const action = next === 'jump' ? pickJumpAction(!!opts.hasMovement) : anim[next];
-  if(!action) return;
-  if (next !== 'jump' && curState === next) return;
-  if (next === 'jump' && curState === 'jump' && curAction === action) return;
-  if (curState === 'jump' && next !== 'jump') fade = Math.max(fade, 0.52);
-  if (curState === 'idle' && next === 'run') fade = Math.min(fade, 0.14);
-  if (curState === 'run' && next === 'idle') fade = Math.min(fade, 0.34);
-  const prev=curAction; curAction=action;
-  curAction.reset();
-  if(next==='jump') curAction.setLoop(THREE.LoopOnce,1);
-  else curAction.setLoop(THREE.LoopRepeat, Infinity);
-  curAction.clampWhenFinished = (next==='jump');
-  curAction.timeScale = 1.0;
-  curAction.fadeIn(fade).play();
-  if(prev && prev!==curAction) prev.fadeOut(fade);
-  curState=next;
 }
 
 // =====================================================================
@@ -1558,6 +1474,8 @@ function updateAnim(dt, hasInput, sprint){
     const airborne = jumping
       || (!grounded && groundGap > 0.05 && ctrl.airTime > 0.02);
 
+    const curState = getAnimState();
+    const curAction = getCurAction();
     // Hold jump clip through takeoff, apex, and landing blend.
     if (curState === 'jump') {
       if (airborne || jumping) {
@@ -2029,6 +1947,8 @@ let _weatherTick = 0;
 const barFill = document.getElementById('startProgress');
 const beginBtn = document.getElementById('begin');
 const loadStatus = document.getElementById('loadStatus');
+const nickInput = document.getElementById('playerNick');
+if (nickInput) nickInput.value = sessionStorage.getItem('opusdev_nick') || '';
 let prog = 0;
 let planetReady = false;
 
@@ -2048,6 +1968,7 @@ function revealPlayNow() {
   clearTimeout(loadTimeout);
   if (loadStatus) loadStatus.textContent = '';
   beginBtn?.classList.add('show');
+  document.querySelector('.start-nick')?.classList.add('show');
 }
 
 setLoadStatus('Loading world...');
@@ -2163,6 +2084,17 @@ async function initCharacterPhysics() {
 
   return physicsInitPromise;
 }
+const NICK_STORAGE = 'opusdev_nick';
+
+function readPlayerNick() {
+  const el = document.getElementById('playerNick');
+  const v = el?.value?.trim();
+  const nick = sanitizeNick(v || sessionStorage.getItem(NICK_STORAGE) || 'Courier');
+  sessionStorage.setItem(NICK_STORAGE, nick);
+  if (el && el.value !== nick) el.value = nick;
+  return nick;
+}
+
 function startGame() {
   abetoPlanet?.setBuildRadius(ASSEMBLY_INNER, ASSEMBLY_OUTER);
   placePlayerSpawn();
@@ -2182,6 +2114,7 @@ function startGame() {
   clock.start();
   // Animus build-from-blocks: world materializes outward from spawn.
   abetoPlanet?.startAssembly?.(player.position);
+  if (ENABLE_MULTIPLAYER) mp.connect(readPlayerNick());
 
   document.body.classList.add('playing', 'page-flip');
   try { actx = new (window.AudioContext || window.webkitAudioContext)(); startAmbientMusic(); } catch (e) {}
@@ -2205,9 +2138,11 @@ function startGame() {
 
 beginBtn.onclick = () => {
   beginBtn.disabled = true;
+  readPlayerNick();
   startGame();
   initCharacterPhysics().catch((e) => console.warn('BVH init', e));
 };
+addEventListener('beforeunload', () => mp.disconnect());
 // Debug: toggle the Animus reality-bubble materialization.
 window.__assemblyOn = () => { abetoPlanet?.startAssembly?.(player.position); return 'assembly on'; };
 window.__assemblyOff = () => { abetoPlanet?.stopAssembly?.(); return 'assembly off'; };
@@ -2281,7 +2216,7 @@ function tick(){
 
   // broadcast our transform + animation state and interpolate remote couriers
   if (ENABLE_MULTIPLAYER) {
-    mp.update(dt, { pos: player.position, quat: player.quaternion, anim: curState });
+    mp.update(dt, { pos: player.position, quat: player.quaternion, anim: getAnimState() });
   }
   if (composer) {
     if ((tickId % INK_EVERY_N) === 0) inkOutline?.render(tickId);
