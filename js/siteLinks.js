@@ -1,7 +1,7 @@
 // Public links — shown in-game footer and start screen.
 export const SITE_LINKS = {
   site: 'https://opusdev.org',
-  twitter: 'https://x.com/0pusdev',
+  twitter: 'https://x.com/gameopusdev',
   twitterCoin: 'https://x.com/0pusdev',
   github: 'https://github.com/rapkuryer/opusdev-docs',
   pumpfun: 'https://pump.fun',

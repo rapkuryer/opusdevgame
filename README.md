@@ -38,7 +38,7 @@ npm start
 
 - **Play:** [opusdev.org](https://opusdev.org)
 - Public docs: [github.com/rapkuryer/opusdev-docs](https://github.com/rapkuryer/opusdev-docs)
-- Developer: [@0pusdev on X](https://x.com/0pusdev)
+- Developer: [@gameopusdev on X](https://x.com/gameopusdev)
 
 ## License
 
