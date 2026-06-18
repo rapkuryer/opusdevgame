@@ -1970,6 +1970,23 @@ const nickInput = document.getElementById('playerNick');
 if (nickInput) nickInput.value = sessionStorage.getItem('opusdev_nick') || '';
 let prog = 0;
 let planetReady = false;
+let loadFailed = false;
+let meshesDone = 0;
+const MESH_TOTAL = 16;
+const loadTimers = [];
+
+function clearLoadTimers() {
+  for (const t of loadTimers) clearTimeout(t);
+  loadTimers.length = 0;
+}
+
+function meshStatus(label) {
+  if (!label || label === 'textures') return 'Preparing world…';
+  if (label.includes('hitmesh')) return `Collision mesh (${meshesDone}/${MESH_TOTAL})…`;
+  if (label.startsWith('terrain')) return `Terrain (${meshesDone}/${MESH_TOTAL})…`;
+  if (label === 'water') return `Water (${meshesDone}/${MESH_TOTAL})…`;
+  return 'Loading world…';
+}
 
 function setLoadProgress(pct) {
   prog = Math.max(prog, Math.min(100, pct));
@@ -1981,10 +1998,11 @@ function setLoadStatus(msg) {
 }
 
 function revealPlayNow() {
+  if (loadFailed) return;
   planetReady = true;
   setLoadProgress(100);
   clearInterval(loadTick);
-  clearTimeout(loadTimeout);
+  clearLoadTimers();
   if (loadStatus) loadStatus.textContent = '';
   beginBtn?.classList.add('show');
   document.querySelector('.start-nick')?.classList.add('show');
@@ -1994,21 +2012,47 @@ setLoadStatus('Loading world...');
 
 const loadTick = setInterval(() => {
   if (planetReady) return;
-  setLoadProgress(Math.min(88, prog + 2 + Math.random() * 4));
-}, 140);
+  // Gentle creep only when real progress stalls — never fake 88%.
+  if (prog < 96) setLoadProgress(prog + 0.25);
+}, 900);
 
-const loadTimeout = setTimeout(() => {
+loadTimers.push(setTimeout(() => {
   if (planetReady) return;
-  setLoadStatus('Still loading world…');
-  setLoadProgress(94);
-}, 45000);
+  setLoadStatus('Downloading planet meshes…');
+}, 20000));
+
+loadTimers.push(setTimeout(() => {
+  if (planetReady) return;
+  setLoadStatus('First visit can take 1–2 minutes — hang tight…');
+}, 45000));
+
+loadTimers.push(setTimeout(() => {
+  if (planetReady) return;
+  setLoadStatus('Almost there — decoding 3D world…');
+}, 90000));
+
+loadTimers.push(setTimeout(() => {
+  if (planetReady) return;
+  loadFailed = true;
+  clearInterval(loadTick);
+  clearLoadTimers();
+  setLoadProgress(0);
+  setLoadStatus('Load timed out — check connection and tap RETRY');
+  if (beginBtn) {
+    beginBtn.textContent = 'RETRY';
+    beginBtn.classList.add('show');
+    beginBtn.disabled = false;
+  }
+}, 210000));
 
 (async () => {
   const t0 = performance.now();
   try {
     setLoadStatus('Loading world...');
     abetoPlanet = await loadAbetoPlanet(scene, camera, (p, label) => {
-      setLoadProgress(6 + p * 62);
+      if (label && !String(label).includes('-skip')) meshesDone++;
+      setLoadProgress(4 + p * 90);
+      setLoadStatus(meshStatus(label));
       if (label) console.log('planet load:', label, Math.round(p * 100) + '%');
     });
     setLoadProgress(72);
@@ -2057,7 +2101,8 @@ const loadTimeout = setTimeout(() => {
   } catch (e) {
     console.error('Planet load failed', e);
     clearInterval(loadTick);
-    clearTimeout(loadTimeout);
+    clearLoadTimers();
+    loadFailed = true;
     setLoadProgress(0);
     setLoadStatus('Could not load world — check connection and tap RETRY');
     if (beginBtn) {

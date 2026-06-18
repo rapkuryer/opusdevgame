@@ -10,6 +10,18 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@200;300&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="css/style.css" />
+<link rel="preload" href="assets/libs/draco/draco_decoder.wasm" as="fetch" crossorigin />
+<link rel="preload" href="assets/images/atlas.png" as="image" />
+<script>
+// Warm CDN cache for planet meshes before the main module boots.
+(function () {
+  var i, urls = [];
+  for (i = 0; i < 5; i++) urls.push('assets/planet/hitmesh_' + i + '.drc');
+  for (i = 0; i < 10; i++) urls.push('assets/planet/full_' + i + '.drc');
+  urls.push('assets/planet/water.drc');
+  urls.forEach(function (u) { fetch(u).catch(function () {}); });
+})();
+</script>
 <script>
 (function () {
   var h = location.hostname;

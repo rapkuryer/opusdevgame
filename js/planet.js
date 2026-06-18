@@ -414,6 +414,7 @@ export async function loadAbetoPlanet(scene, camera, onProgress) {
   const draco = new DRACOLoader();
   draco.setDecoderPath(DRACO_PATH);
   draco.setWorkerLimit(2);
+  draco.preload();
 
   const DRACO_TIMEOUT_MS = 90000;
   const loadDrc = async (url, retries = 2) => {
@@ -464,38 +465,75 @@ export async function loadAbetoPlanet(scene, camera, onProgress) {
 
   const renderer = rendererFromScene(scene);
   const texLoader = new THREE.TextureLoader();
-  const atlas = setupAtlasTexture(await new Promise((res, rej) => {
-    texLoader.load('assets/images/atlas.png', res, undefined, rej);
-  }));
-  await new Promise((resolve) => {
-    if (atlas.image?.complete) resolve();
-    else atlas.image.onload = resolve;
-  });
-  const atlasPixels = readAtlasPixels(atlas.image);
 
-  let noise, noiseBlur, noiseTerrain, waterNoise, waterNoiseBlur;
-  try {
-    const ktxTimeout = (p, ms = 25000) => Promise.race([
-      p,
-      new Promise((_, rej) => setTimeout(() => rej(new Error('KTX2 timeout')), ms)),
-    ]);
-    const [noiseRaw, terrainRaw, waterRaw, blurRaw] = await Promise.all([
-      ktxTimeout(ktx2.loadAsync('assets/images/noise-simplex-layered-pixellated-highq.ktx2')),
-      ktxTimeout(ktx2.loadAsync('assets/images/noises-terrain.ktx2')),
-      ktxTimeout(ktx2.loadAsync('assets/images/water-noises-highq.ktx2')),
-      ktxTimeout(ktx2.loadAsync('assets/images/noise-simplex-layered-blur-highq.ktx2')).catch(() => null),
-    ]);
-    noise = setupNoiseTexture(noiseRaw, renderer);
-    noiseTerrain = setupNoiseTexture(terrainRaw, renderer);
-    waterNoise = setupNoiseTexture(waterRaw, renderer);
-    noiseBlur = blurRaw ? setupNoiseTexture(blurRaw, renderer) : noise;
-    waterNoiseBlur = noiseBlur;
-  } catch (e) {
-    console.warn('KTX2 textures failed, using procedural noise fallback', e);
-    noise = noiseBlur = noiseTerrain = waterNoise = waterNoiseBlur = createProceduralNoise();
+  const total = HIT_PARTS + CHUNKS + 1;
+  let done = 0;
+  const tick = (label) => {
+    done++;
+    onProgress?.(done / total, label);
+  };
+
+  const jobs = [
+    ...Array.from({ length: HIT_PARTS }, (_, i) => ({
+      url: `assets/planet/hitmesh_${i}.drc`,
+      label: `hitmesh_${i}`,
+      optional: false,
+    })),
+    ...Array.from({ length: CHUNKS }, (_, i) => ({
+      url: `assets/planet/full_${i}.drc`,
+      label: `terrain_${i}`,
+      optional: true,
+    })),
+    { url: 'assets/planet/water.drc', label: 'water', optional: true },
+  ];
+
+  async function loadNoiseTextures() {
+    try {
+      const ktxTimeout = (p, ms = 10000) => Promise.race([
+        p,
+        new Promise((_, rej) => setTimeout(() => rej(new Error('KTX2 timeout')), ms)),
+      ]);
+      const [noiseRaw, terrainRaw, waterRaw, blurRaw] = await Promise.all([
+        ktxTimeout(ktx2.loadAsync('assets/images/noise-simplex-layered-pixellated-highq.ktx2')),
+        ktxTimeout(ktx2.loadAsync('assets/images/noises-terrain.ktx2')),
+        ktxTimeout(ktx2.loadAsync('assets/images/water-noises-highq.ktx2')),
+        ktxTimeout(ktx2.loadAsync('assets/images/noise-simplex-layered-blur-highq.ktx2')).catch(() => null),
+      ]);
+      const noise = setupNoiseTexture(noiseRaw, renderer);
+      const noiseTerrain = setupNoiseTexture(terrainRaw, renderer);
+      const waterNoise = setupNoiseTexture(waterRaw, renderer);
+      const noiseBlur = blurRaw ? setupNoiseTexture(blurRaw, renderer) : noise;
+      return { noise, noiseBlur, noiseTerrain, waterNoise, waterNoiseBlur: noiseBlur };
+    } catch (e) {
+      console.warn('KTX2 textures failed, using procedural noise fallback', e);
+      const n = createProceduralNoise();
+      return { noise: n, noiseBlur: n, noiseTerrain: n, waterNoise: n, waterNoiseBlur: n };
+    }
   }
 
-  const textures = { atlas, noise, noiseBlur, noiseTerrain, waterNoise, waterNoiseBlur };
+  onProgress?.(0, 'textures');
+  console.log('[planet] decoding', jobs.length, 'Draco meshes (parallel with textures)…');
+
+  const atlasPromise = (async () => {
+    const atlas = setupAtlasTexture(await new Promise((res, rej) => {
+      texLoader.load('assets/images/atlas.png', res, undefined, rej);
+    }));
+    await new Promise((resolve) => {
+      if (atlas.image?.complete) resolve();
+      else atlas.image.onload = resolve;
+    });
+    return { atlas, atlasPixels: readAtlasPixels(atlas.image) };
+  })();
+
+  const [atlasPack, decoded, noiseTextures] = await Promise.all([
+    atlasPromise,
+    loadDrcBatch(jobs),
+    loadNoiseTextures(),
+  ]);
+  const { atlas, atlasPixels } = atlasPack;
+  const textures = { atlas, ...noiseTextures };
+  console.log('[planet] Draco done');
+
   const fogUniforms = createFogUniforms();
   const terrainMat = createTerrainMaterial(textures, fogUniforms);
   const waterMat = createWaterMaterial(textures, fogUniforms);
@@ -522,33 +560,9 @@ export async function loadAbetoPlanet(scene, camera, onProgress) {
   group.name = 'planet-present';
   scene.add(group);
 
-  const total = HIT_PARTS + CHUNKS + 1;
-  let done = 0;
-  const tick = (label) => {
-    done++;
-    onProgress?.(done / total, label);
-  };
-
-  const jobs = [
-    ...Array.from({ length: HIT_PARTS }, (_, i) => ({
-      url: `assets/planet/hitmesh_${i}.drc`,
-      label: `hitmesh_${i}`,
-      optional: false,
-    })),
-    ...Array.from({ length: CHUNKS }, (_, i) => ({
-      url: `assets/planet/full_${i}.drc`,
-      label: `terrain_${i}`,
-      optional: true,
-    })),
-    { url: 'assets/planet/water.drc', label: 'water', optional: true },
-  ];
-
-  console.log('[planet] decoding', jobs.length, 'Draco meshes…');
-  const decoded = await loadDrcBatch(jobs);
   const hitParts = decoded.slice(0, HIT_PARTS);
   const terrainGeos = decoded.slice(HIT_PARTS, HIT_PARTS + CHUNKS);
   const waterGeoRaw = decoded[HIT_PARTS + CHUNKS] ?? null;
-  console.log('[planet] Draco done');
   const validHit = hitParts.filter((g) => g.attributes.position?.count > 3);
   const hitGeo = mergeGeometries(validHit, false);
   hitGeo.computeVertexNormals();
@@ -635,7 +649,7 @@ export async function loadAbetoPlanet(scene, camera, onProgress) {
     parentGroup: group,
     ktx2,
     atlas,
-    noiseTerrain,
+    noiseTerrain: textures.noiseTerrain,
     fogUniforms,
     onProgress: (label) => tick(label),
   }).then((decor) => {
