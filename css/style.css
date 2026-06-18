@@ -288,12 +288,6 @@
     width: 16px;
     height: 16px;
   }
-  .site-link__icon--pf {
-    width: 18px;
-    height: 18px;
-    object-fit: contain;
-    display: block;
-  }
 
   /* Info button — top right, in-game only */
   .info-btn {
