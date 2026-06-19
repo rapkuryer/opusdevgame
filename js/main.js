@@ -48,11 +48,11 @@ function initSiteFooter() {
   if (!footer) return;
   const tw = footer.querySelector('[data-link="twitter"]');
   const tc = footer.querySelector('[data-link="twitterCoin"]');
-  const gh = footer.querySelector('[data-link="github"]');
+  const ory = footer.querySelector('[data-link="orynth"]');
   const pf = footer.querySelectorAll('[data-link="pumpfun"]');
   if (tw) tw.href = SITE_LINKS.twitter;
   if (tc) tc.href = SITE_LINKS.twitterCoin;
-  if (gh) gh.href = SITE_LINKS.github;
+  if (ory) ory.href = SITE_LINKS.orynth;
   pf.forEach((el) => { el.href = SITE_LINKS.pumpfun; });
   document.querySelectorAll('#infoPanel [data-link="twitter"]').forEach((el) => {
     el.href = SITE_LINKS.twitter;
@@ -60,8 +60,8 @@ function initSiteFooter() {
   document.querySelectorAll('#infoPanel [data-link="twitterCoin"]').forEach((el) => {
     el.href = SITE_LINKS.twitterCoin;
   });
-  document.querySelectorAll('#infoPanel [data-link="github"]').forEach((el) => {
-    el.href = SITE_LINKS.github;
+  document.querySelectorAll('#infoPanel [data-link="orynth"]').forEach((el) => {
+    el.href = SITE_LINKS.orynth;
   });
   document.querySelectorAll('#infoPanel [data-link="pumpfun"]').forEach((el) => {
     el.href = SITE_LINKS.pumpfun;

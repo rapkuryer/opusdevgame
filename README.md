@@ -56,6 +56,7 @@ Up to **10 players** per room — same Capoeira character, nicknames above heads
 ## Links
 
 - **Play:** [opusdev.org](https://opusdev.org)
+- **Orynth:** [orynth.dev/projects/ilya-kalashnikov](https://www.orynth.dev/projects/ilya-kalashnikov)
 - Public docs: [github.com/rapkuryer/opusdev-docs](https://github.com/rapkuryer/opusdev-docs)
 - Developer: [@0pusdev on X](https://x.com/0pusdev)
 - Game: [@gameopusdev on X](https://x.com/gameopusdev)
