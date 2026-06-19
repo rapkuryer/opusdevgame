@@ -26,24 +26,43 @@ export function sanitizeNick(raw) {
   return getEnteredNick(raw) || 'Courier';
 }
 
-function makeNameTag(text) {
+export function createNameTag(text, opts = {}) {
   const label = sanitizeNick(text);
+  const local = !!opts.local;
   const cv = document.createElement('canvas');
   const ctx = cv.getContext('2d');
-  const font = 'bold 22px Nunito, system-ui, sans-serif';
+  const font = 'bold 24px Nunito, system-ui, sans-serif';
   ctx.font = font;
-  const tw = Math.min(220, Math.ceil(ctx.measureText(label).width) + 28);
+  const tw = Math.min(240, Math.ceil(ctx.measureText(label).width) + 32);
   cv.width = tw;
-  cv.height = 40;
-  ctx.font = font;
-  ctx.fillStyle = 'rgba(8, 8, 12, 0.55)';
-  ctx.beginPath();
-  ctx.roundRect(4, 6, tw - 8, 28, 8);
-  ctx.fill();
-  ctx.fillStyle = '#f4f2ee';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(label, tw / 2, 20);
+  cv.height = 44;
+  const draw = (name) => {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    ctx.font = font;
+    if (local) {
+      const g = ctx.createLinearGradient(4, 4, tw - 4, 36);
+      g.addColorStop(0, 'rgba(153, 69, 255, 0.85)');
+      g.addColorStop(1, 'rgba(20, 241, 149, 0.85)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.roundRect(3, 5, tw - 6, 32, 9);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(8, 8, 12, 0.72)';
+      ctx.beginPath();
+      ctx.roundRect(5, 7, tw - 10, 28, 7);
+      ctx.fill();
+    } else {
+      ctx.fillStyle = 'rgba(8, 8, 12, 0.62)';
+      ctx.beginPath();
+      ctx.roundRect(4, 7, tw - 8, 30, 8);
+      ctx.fill();
+    }
+    ctx.fillStyle = '#f8f6f2';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(name, tw / 2, 22);
+  };
+  draw(label);
   const tex = new THREE.CanvasTexture(cv);
   tex.minFilter = THREE.LinearFilter;
   tex.magFilter = THREE.LinearFilter;
@@ -54,24 +73,15 @@ function makeNameTag(text) {
     depthWrite: false,
     alphaTest: 0.04,
   }));
-  sp.scale.set(1.35, 0.42, 1);
-  sp.position.y = CHAR_HEIGHT * 0.92;
-  sp.renderOrder = 998;
+  sp.scale.set(local ? 1.5 : 1.4, local ? 0.46 : 0.44, 1);
+  sp.position.y = CHAR_HEIGHT * 0.94;
+  sp.renderOrder = 999;
   sp.userData.label = label;
   sp.userData.setText = (t) => {
     const next = sanitizeNick(t);
     if (next === sp.userData.label) return;
     sp.userData.label = next;
-    ctx.clearRect(0, 0, cv.width, cv.height);
-    ctx.font = font;
-    ctx.fillStyle = 'rgba(8, 8, 12, 0.55)';
-    ctx.beginPath();
-    ctx.roundRect(4, 6, tw - 8, 28, 8);
-    ctx.fill();
-    ctx.fillStyle = '#f4f2ee';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(next, tw / 2, 20);
+    draw(next);
     tex.needsUpdate = true;
   };
   return sp;
@@ -85,6 +95,7 @@ export class Multiplayer {
     this.ws = null;
     this.id = null;
     this.nick = 'Courier';
+    this.pubkey = null;
     this.remotes = new Map();
     this._sendTimer = 0;
     this._connected = false;
@@ -94,8 +105,9 @@ export class Multiplayer {
     this._retryTimer = null;
   }
 
-  connect(nick) {
+  connect(nick, pubkey = null) {
     this.nick = sanitizeNick(nick);
+    this.pubkey = pubkey || null;
     this._wantReconnect = true;
     if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
       return;
@@ -141,7 +153,7 @@ export class Multiplayer {
       this._connected = true;
       this._connecting = false;
       this._retryDelay = 1;
-      this._send({ type: 'hello', nick: this.nick });
+      this._send({ type: 'hello', nick: this.nick, pubkey: this.pubkey });
       console.log('[net] connected');
       this._updateCount();
     });
@@ -241,7 +253,7 @@ export class Multiplayer {
     const label = sanitizeNick(nick);
     remote.nick = label;
     if (!remote.nameTag) {
-      remote.nameTag = makeNameTag(label);
+      remote.nameTag = createNameTag(label);
       remote.group.add(remote.nameTag);
     } else {
       remote.nameTag.userData.setText(label);

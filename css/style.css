@@ -149,6 +149,71 @@
     color: rgba(255, 140, 120, 0.9);
   }
 
+  .start-wallet {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: min(300px, 82vw);
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity .5s ease, transform .3s ease;
+  }
+  .start-wallet.show {
+    display: flex;
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .start-wallet__status {
+    margin: 0;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: rgba(244, 242, 236, 0.62);
+    text-align: center;
+  }
+  .start-wallet__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 22px;
+    border: 1px solid rgba(171, 159, 242, 0.45);
+    border-radius: 4px;
+    background: linear-gradient(135deg, rgba(86, 45, 145, 0.55), rgba(30, 30, 50, 0.85));
+    color: #ece8ff;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background .2s ease, transform .15s ease, border-color .2s ease;
+  }
+  .start-wallet__btn:hover {
+    border-color: rgba(171, 159, 242, 0.75);
+    background: linear-gradient(135deg, rgba(100, 55, 165, 0.65), rgba(35, 35, 58, 0.9));
+  }
+  .start-wallet__btn:active { transform: scale(0.98); }
+  .start-wallet__btn:disabled { opacity: 0.5; cursor: wait; }
+  .start-wallet__icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    opacity: 0.95;
+  }
+  .start-wallet__hint {
+    margin: 0;
+    min-height: 16px;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    color: rgba(255, 140, 120, 0.88);
+    text-align: center;
+  }
+  .start-wallet.connected .start-wallet__btn { display: none; }
+  .start-wallet.connected .start-wallet__status {
+    color: rgba(180, 255, 220, 0.88);
+  }
+
   .online-badge {
     display: none;
     position: fixed;

@@ -85,6 +85,7 @@ wss.on('connection', (ws) => {
     if (msg.type === 'hello' && !ws.roomId) {
       clearTimeout(helloTimer);
       ws.nick = sanitizeNick(msg.nick);
+      ws.pubkey = typeof msg.pubkey === 'string' ? msg.pubkey.slice(0, 44) : null;
       joinRoom(ws);
       return;
     }

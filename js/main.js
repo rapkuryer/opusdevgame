@@ -7,7 +7,11 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { PLANET_RADIUS, GRAVITY, JUMP, WALK, RUN, RUN_ANIM_SYNC, CHAR_HEIGHT, MOVE, isMobile, CENTER, MAX_PLAYERS } from './config.js';
-import { Multiplayer, sanitizeNick, getEnteredNick } from './net.js';
+import { Multiplayer, sanitizeNick, getEnteredNick, createNameTag } from './net.js';
+import {
+  connectPhantom, trySilentConnect, shortAddress, watchWalletDisconnect,
+} from './wallet.js';
+import { loadProfile, saveProfile } from './profile.js';
 import { loadPlayerCharacter, warmRemotePool, isPlayerCharacterReady } from './playerCharacter.js';
 import { loadAbetoPlanet } from './planet.js';
 import { SITE_LINKS } from './siteLinks.js';
@@ -1068,8 +1072,8 @@ function connectMultiplayer() {
   if (!ENABLE_MULTIPLAYER) return;
   if (!isPlayerCharacterReady()) return;
   const nick = readPlayerNick();
-  if (!nick) return;
-  mp.connect(nick);
+  if (!nick || !walletPubkey) return;
+  mp.connect(nick, walletPubkey);
 }
 
 // --- Capoeira FBX character + animation state machine (idle / run / jump) ---
@@ -1970,7 +1974,12 @@ const beginBtn = document.getElementById('begin');
 const loadStatus = document.getElementById('loadStatus');
 const nickInput = document.getElementById('playerNick');
 const nickHint = document.getElementById('nickHint');
-if (nickInput) nickInput.value = sessionStorage.getItem('opusdev_nick') || '';
+const startWallet = document.getElementById('startWallet');
+const btnPhantom = document.getElementById('btnPhantom');
+const walletStatus = document.getElementById('walletStatus');
+const walletHint = document.getElementById('walletHint');
+let walletPubkey = null;
+let localNameTag = null;
 let prog = 0;
 let planetReady = false;
 let loadFailed = false;
@@ -2008,9 +2017,72 @@ function revealPlayNow() {
   clearInterval(loadTick);
   clearLoadTimers();
   if (loadStatus) loadStatus.textContent = '';
-  beginBtn?.classList.add('show');
-  document.querySelector('.start-nick')?.classList.add('show');
+  startWallet?.classList.add('show');
+  void initWalletGate();
 }
+
+function setWalletUI(pubkey) {
+  walletPubkey = pubkey || null;
+  if (startWallet) {
+    startWallet.classList.toggle('connected', !!pubkey);
+    startWallet.classList.add('show');
+  }
+  if (walletStatus) {
+    walletStatus.textContent = pubkey
+      ? `Phantom connected · ${shortAddress(pubkey)}`
+      : 'Connect Phantom to play';
+  }
+  if (walletHint) {
+    const prof = pubkey ? loadProfile(pubkey) : null;
+    walletHint.textContent = pubkey && !prof?.nick ? 'Enter your nickname below' : '';
+  }
+  document.querySelector('.start-nick')?.classList.toggle('show', !!pubkey);
+  if (pubkey) {
+    const prof = loadProfile(pubkey);
+    if (prof?.nick && nickInput) nickInput.value = prof.nick;
+    beginBtn?.classList.add('show');
+  } else {
+    beginBtn?.classList.remove('show');
+    document.querySelector('.start-nick')?.classList.remove('show');
+  }
+}
+
+async function initWalletGate() {
+  const silent = await trySilentConnect();
+  if (silent) {
+    setWalletUI(silent);
+    return;
+  }
+  setWalletUI(null);
+}
+
+function setLocalNameTag(nick) {
+  const label = sanitizeNick(nick);
+  if (!label) return;
+  if (localNameTag) {
+    localNameTag.userData.setText(label);
+    return;
+  }
+  localNameTag = createNameTag(label, { local: true });
+  player.add(localNameTag);
+}
+
+btnPhantom?.addEventListener('click', async () => {
+  if (walletHint) walletHint.textContent = '';
+  btnPhantom.disabled = true;
+  try {
+    const pubkey = await connectPhantom();
+    setWalletUI(pubkey);
+  } catch (e) {
+    if (walletHint) walletHint.textContent = e?.message || 'Could not connect Phantom';
+  } finally {
+    btnPhantom.disabled = false;
+  }
+});
+
+watchWalletDisconnect(() => {
+  if (!started) setWalletUI(null);
+});
 
 setLoadStatus('Loading world...');
 
@@ -2171,7 +2243,6 @@ async function initCharacterPhysics() {
 
   return physicsInitPromise;
 }
-const NICK_STORAGE = 'opusdev_nick';
 
 function clearNickError() {
   nickInput?.classList.remove('start-nick__input--error');
@@ -2187,7 +2258,7 @@ function showNickError(msg = 'Enter a nickname to play') {
 function readPlayerNick() {
   const nick = getEnteredNick(nickInput?.value);
   if (!nick) return null;
-  sessionStorage.setItem(NICK_STORAGE, nick);
+  if (walletPubkey) saveProfile(walletPubkey, nick);
   if (nickInput && nickInput.value !== nick) nickInput.value = nick;
   return nick;
 }
@@ -2201,6 +2272,10 @@ function startGame() {
   }
   if (!characterReady || !playerModel?.userData?.isFBX) {
     setLoadStatus('Character still loading…');
+    return;
+  }
+  if (!walletPubkey) {
+    if (walletHint) walletHint.textContent = 'Connect Phantom first';
     return;
   }
   const nick = readPlayerNick();
@@ -2222,6 +2297,7 @@ function startGame() {
     stripInkShells(playerModel);
     refreshOutline();
   }
+  setLocalNameTag(nick);
   started = true;
   clock.start();
   // Animus build-from-blocks: world materializes outward from spawn.
@@ -2251,6 +2327,10 @@ function startGame() {
 beginBtn.onclick = () => {
   if (!abetoPlanet) {
     location.reload();
+    return;
+  }
+  if (!walletPubkey) {
+    if (walletHint) walletHint.textContent = 'Connect Phantom first';
     return;
   }
   if (!characterReady || !playerModel?.userData?.isFBX) {

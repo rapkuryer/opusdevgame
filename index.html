@@ -44,6 +44,14 @@
         <div class="start-progress" id="startProgress"></div>
       </div>
       <p class="start-status" id="loadStatus">Loading world...</p>
+      <div id="startWallet" class="start-wallet">
+        <p id="walletStatus" class="start-wallet__status">Connect Phantom to play</p>
+        <button id="btnPhantom" class="start-wallet__btn" type="button">
+          <svg class="start-wallet__icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2C6.48 2 2 6.15 2 11.1c0 2.55 1.19 4.84 3.05 6.36L4 22l4.55-2.02C9.6 20.66 10.78 21 12 21c5.52 0 10-4.15 10-9.1S17.52 2 12 2z"/></svg>
+          <span>Connect Phantom</span>
+        </button>
+        <p id="walletHint" class="start-wallet__hint" aria-live="polite"></p>
+      </div>
       <label class="start-nick" for="playerNick">
         <span>Nickname</span>
         <input id="playerNick" class="start-nick__input" type="text" maxlength="16" placeholder="Your nickname" autocomplete="nickname" required />
@@ -72,7 +80,7 @@
     <p class="info-panel__lead">Browser 3D game on a tiny stylized planet — built with Three.js (WebGL) and three-mesh-bvh. Play at <a href="https://opusdev.org" target="_blank" rel="noopener noreferrer">opusdev.org</a>, no install.</p>
     <section class="info-panel__section">
       <h3>Multiplayer</h3>
-      <p>Up to 10 players per room — same Capoeira character, nicknames above heads. Connect from anywhere.</p>
+      <p>Connect <strong>Phantom</strong>, pick a nickname, then play — up to 10 players per room with names above heads. Your wallet + nick are saved in this browser for next time.</p>
     </section>
     <section class="info-panel__section">
       <h3>World build</h3>
