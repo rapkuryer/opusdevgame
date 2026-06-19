@@ -1,4 +1,12 @@
-  :root { --ui-font: 'Nunito', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+  :root {
+    --ui-font: 'Nunito', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --sketch-ink: #1a1a1a;
+    --sketch-face: #f8f8f6;
+    --sketch-shadow: #8a99a8;
+    --sketch-icon: #7a8a99;
+    --sketch-offset: 5px;
+    --sketch-size: 54px;
+  }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; height: 100%; overflow: hidden; background: #08080a; font-family: var(--ui-font); }
   #app { position: fixed; inset: 0; opacity: 0; transition: opacity .35s ease; }
@@ -71,34 +79,195 @@
   }
   .start-play {
     margin-top: 10px;
-    padding: 13px 34px;
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    border-radius: 2px;
-    background: rgba(255, 255, 255, 0.06);
-    color: #f4f2ee;
-    font-family: inherit;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.28em;
-    text-indent: 0.28em;
-    text-transform: uppercase;
-    cursor: pointer;
     opacity: 0;
     pointer-events: none;
     transform: translateY(8px);
-    transition: opacity .5s ease, transform .3s ease, background .2s ease, border-color .2s ease;
+    transition: opacity .5s ease, transform .3s ease;
   }
   .start-play.show {
     opacity: 1;
     pointer-events: auto;
     transform: translateY(0);
   }
-  .start-play:hover {
-    background: rgba(255, 255, 255, 0.11);
-    border-color: rgba(255, 255, 255, 0.36);
-  }
-  .start-play:active { transform: translateY(1px); }
   .start-play:disabled { opacity: .45; cursor: wait; }
+
+  /* Sketch / doodle buttons — white face, ink outline, offset shadow */
+  .sketch-btn {
+    position: relative;
+    display: block;
+    width: var(--sketch-size);
+    height: var(--sketch-size);
+    padding: 0;
+    margin: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--sketch-icon);
+    flex-shrink: 0;
+    font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .sketch-btn::before {
+    content: '';
+    position: absolute;
+    left: var(--sketch-offset);
+    top: var(--sketch-offset);
+    width: 100%;
+    height: 100%;
+    background: var(--sketch-shadow);
+    border: 2.5px solid var(--sketch-ink);
+    border-radius: 3px 2px 4px 3px;
+    box-sizing: border-box;
+    z-index: 0;
+  }
+  .sketch-btn__face {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background: var(--sketch-face);
+    border: 2.5px solid var(--sketch-ink);
+    border-radius: 2px 3px 3px 2px;
+    box-sizing: border-box;
+    transition: transform .12s ease;
+  }
+  .sketch-btn:hover .sketch-btn__face { transform: translate(-1px, -1px); }
+  .sketch-btn:active .sketch-btn__face { transform: translate(2px, 2px); }
+  .sketch-btn:disabled { opacity: .5; cursor: wait; }
+  .sketch-btn__icon {
+    width: 26px;
+    height: 26px;
+    display: block;
+    flex-shrink: 0;
+  }
+  .sketch-btn--wide {
+    width: min(300px, 82vw);
+    height: auto;
+    min-height: var(--sketch-size);
+  }
+  .sketch-btn--wide .sketch-btn__face {
+    min-height: var(--sketch-size);
+    padding: 10px 18px;
+    gap: 10px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--sketch-icon);
+  }
+  .sketch-btn--wide .sketch-btn__icon { width: 20px; height: 20px; }
+  .sketch-btn--text .sketch-btn__face {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--sketch-icon);
+  }
+  .sketch-btn[aria-pressed="false"] .sketch-btn__face { opacity: .55; }
+
+  .sketch-field {
+    position: relative;
+    width: min(280px, 78vw);
+    min-height: var(--sketch-size);
+  }
+  .sketch-field::before {
+    content: '';
+    position: absolute;
+    left: var(--sketch-offset);
+    top: var(--sketch-offset);
+    width: 100%;
+    height: 100%;
+    background: var(--sketch-shadow);
+    border: 2.5px solid var(--sketch-ink);
+    border-radius: 3px 2px 4px 3px;
+    box-sizing: border-box;
+    z-index: 0;
+  }
+  .sketch-field__input {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    min-height: var(--sketch-size);
+    padding: 12px 14px;
+    border: 2.5px solid var(--sketch-ink);
+    border-radius: 2px 3px 3px 2px;
+    background: var(--sketch-face);
+    color: var(--sketch-ink);
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    text-align: center;
+    outline: none;
+    box-sizing: border-box;
+  }
+  .sketch-field__input:focus { transform: translate(-1px, -1px); }
+  .sketch-field__input::placeholder { color: rgba(122, 138, 153, 0.55); }
+  .sketch-field__input--error {
+    background: #fff5f3;
+    color: #5a2020;
+  }
+
+  /* Vertical UI rail — stacked in height, not in a horizontal row */
+  .ui-rail {
+    position: fixed;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 56;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 11px;
+    pointer-events: none;
+  }
+  body.page-flip-done .ui-rail {
+    display: flex;
+  }
+  .ui-rail > * { pointer-events: auto; }
+  .ui-rail__sep {
+    width: 34px;
+    height: 2px;
+    background: var(--sketch-ink);
+    opacity: .22;
+    border-radius: 99px;
+    margin: 2px 0;
+  }
+  .ui-rail__emoji-wrap {
+    position: relative;
+    width: var(--sketch-size);
+    height: var(--sketch-size);
+  }
+  #emojiRing {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .sketch-btn--tilt1 .sketch-btn__face { transform: rotate(-0.7deg); }
+  .sketch-btn--tilt2 .sketch-btn__face { transform: rotate(0.5deg); }
+  .sketch-btn--tilt3 .sketch-btn__face { transform: rotate(-0.4deg); }
+  .sketch-btn--tilt4 .sketch-btn__face { transform: rotate(0.6deg); }
+  .sketch-btn--tilt5 .sketch-btn__face { transform: rotate(-0.5deg); }
+  .sketch-btn--tilt6 .sketch-btn__face { transform: rotate(0.4deg); }
+  .sketch-btn--tilt7 .sketch-btn__face { transform: rotate(-0.3deg); }
+  .sketch-btn--tilt8 .sketch-btn__face { transform: rotate(0.5deg); }
+  .sketch-btn[class*="--tilt"]:hover .sketch-btn__face { transform: translate(-1px, -1px) rotate(var(--tilt, 0deg)); }
+  .sketch-btn--tilt1:hover .sketch-btn__face { transform: translate(-1px, -1px) rotate(-0.7deg); }
+  .sketch-btn--tilt2:hover .sketch-btn__face { transform: translate(-1px, -1px) rotate(0.5deg); }
+  .sketch-btn--tilt3:hover .sketch-btn__face { transform: translate(-1px, -1px) rotate(-0.4deg); }
+  .sketch-btn--tilt4:hover .sketch-btn__face { transform: translate(-1px, -1px) rotate(0.6deg); }
+  .sketch-btn--tilt5:hover .sketch-btn__face { transform: translate(-1px, -1px) rotate(-0.5deg); }
+  .sketch-btn--tilt6:hover .sketch-btn__face { transform: translate(-1px, -1px) rotate(0.4deg); }
+  .sketch-btn--tilt7:hover .sketch-btn__face { transform: translate(-1px, -1px) rotate(-0.3deg); }
+  .sketch-btn--tilt8:hover .sketch-btn__face { transform: translate(-1px, -1px) rotate(0.5deg); }
+  .sketch-btn[class*="--tilt"]:active .sketch-btn__face { transform: translate(2px, 2px); }
 
   .start-nick {
     display: flex;
@@ -121,26 +290,9 @@
     color: rgba(244, 242, 236, 0.5);
   }
   .start-nick__input {
-    width: 100%;
-    padding: 11px 14px;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    border-radius: 2px;
-    background: rgba(255, 255, 255, 0.05);
-    color: #f4f2ee;
-    font-family: inherit;
-    font-size: 15px;
-    text-align: center;
-    outline: none;
+    /* legacy hook — real input is .sketch-field__input */
   }
-  .start-nick__input:focus {
-    border-color: rgba(255, 255, 255, 0.34);
-    background: rgba(255, 255, 255, 0.08);
-  }
-  .start-nick__input::placeholder { color: rgba(244, 242, 236, 0.35); }
-  .start-nick__input--error {
-    border-color: rgba(255, 120, 100, 0.75);
-    background: rgba(255, 80, 60, 0.08);
-  }
+  .start-nick__input--error { }
   .start-nick__hint {
     margin: 0;
     min-height: 16px;
@@ -172,34 +324,12 @@
     text-align: center;
   }
   .start-wallet__btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 12px 22px;
-    border: 1px solid rgba(171, 159, 242, 0.45);
-    border-radius: 4px;
-    background: linear-gradient(135deg, rgba(86, 45, 145, 0.55), rgba(30, 30, 50, 0.85));
-    color: #ece8ff;
-    font-family: inherit;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: background .2s ease, transform .15s ease, border-color .2s ease;
+    /* uses .sketch-btn--wide */
   }
-  .start-wallet__btn:hover {
-    border-color: rgba(171, 159, 242, 0.75);
-    background: linear-gradient(135deg, rgba(100, 55, 165, 0.65), rgba(35, 35, 58, 0.9));
-  }
-  .start-wallet__btn:active { transform: scale(0.98); }
-  .start-wallet__btn:disabled { opacity: 0.5; cursor: wait; }
-  .start-wallet__icon {
-    width: 18px;
-    height: 18px;
-    flex-shrink: 0;
-    opacity: 0.95;
+  .start-wallet__icon { }
+  .start-wallet.connected .start-wallet__btn { display: none; }
+  .start-wallet.connected .start-wallet__status {
+    color: rgba(180, 255, 220, 0.88);
   }
   .start-wallet__hint {
     margin: 0;
@@ -209,16 +339,12 @@
     color: rgba(255, 140, 120, 0.88);
     text-align: center;
   }
-  .start-wallet.connected .start-wallet__btn { display: none; }
-  .start-wallet.connected .start-wallet__status {
-    color: rgba(180, 255, 220, 0.88);
-  }
 
   .online-badge {
     display: none;
     position: fixed;
-    top: 68px;
-    right: 16px;
+    top: 16px;
+    left: 16px;
     z-index: 54;
     padding: 8px 12px;
     font-size: 12px;
@@ -226,6 +352,7 @@
     letter-spacing: 0.04em;
     opacity: 0.72;
     pointer-events: none;
+    color: var(--sketch-icon);
   }
   .online-badge.online {
     opacity: 1;
@@ -243,154 +370,8 @@
     display: block;
   }
 
-  /* Bottom social links + info — in-game only (hidden on start menu) */
-  .site-footer {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 55;
-    display: none;
-    align-items: flex-end;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-    gap: 10px;
-    padding: 14px 20px 18px;
-    pointer-events: none;
-  }
-  body.page-flip-done .site-footer {
-    display: flex;
-  }
-
-  .solana-badge {
-    pointer-events: auto;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    height: 44px;
-    padding: 0 14px 0 11px;
-    border-radius: 4px;
-    background: rgba(255, 255, 255, 0.96);
-    text-decoration: none;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
-    position: relative;
-    isolation: isolate;
-    transition: transform .15s ease, box-shadow .2s ease;
-  }
-  .solana-badge::before {
-    content: '';
-    position: absolute;
-    inset: -2px;
-    border-radius: 6px;
-    background: linear-gradient(135deg, #9945FF 0%, #19FB9B 55%, #14F195 100%);
-    z-index: -1;
-  }
-  .solana-badge:hover {
-    box-shadow: 0 6px 18px rgba(153, 69, 255, 0.28);
-    transform: translateY(-1px);
-  }
-  .solana-badge:active { transform: scale(0.97); }
-  .solana-badge__icon {
-    width: 22px;
-    height: 17px;
-    flex-shrink: 0;
-  }
-  .solana-badge__text {
-    display: flex;
-    flex-direction: column;
-    line-height: 1.1;
-    gap: 2px;
-  }
-  .solana-badge__chain {
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    background: linear-gradient(90deg, #7c3aed, #0d9488);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-  .solana-badge__token {
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: 0.06em;
-    color: #1a1538;
-  }
-  @media (max-width: 520px) {
-    .solana-badge__chain { font-size: 8px; letter-spacing: 0.14em; }
-    .solana-badge__token { font-size: 11px; }
-    .solana-badge { padding: 0 10px 0 9px; gap: 8px; }
-  }
-  .site-link {
-    pointer-events: auto;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    height: 44px;
-    padding: 0 14px;
-    border: 2px solid rgba(60, 90, 140, 0.55);
-    border-radius: 4px;
-    background: rgba(255, 255, 255, 0.94);
-    color: #2a4a7a;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    text-decoration: none;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
-    transition: background .2s ease, border-color .2s ease, transform .15s ease;
-    box-sizing: border-box;
-  }
-  .site-link:hover {
-    background: #fff;
-    border-color: rgba(60, 90, 140, 0.75);
-    color: #2a4a7a;
-  }
-  .site-link:active { transform: scale(0.96); }
-  .site-link__icon {
-    width: 15px;
-    height: 15px;
-    flex-shrink: 0;
-    opacity: 0.92;
-  }
-  .site-link--icon-only {
-    width: 44px;
-    padding: 0;
-    gap: 0;
-  }
-  .site-link--icon-only .site-link__icon {
-    width: 16px;
-    height: 16px;
-  }
-
-  /* Info button — top right, in-game only */
-  .info-btn {
-    position: fixed;
-    top: 16px;
-    right: 16px;
-    z-index: 56;
-    width: 44px;
-    height: 44px;
-    padding: 0;
-    border: 2px solid rgba(60, 90, 140, 0.55);
-    border-radius: 4px;
-    background: rgba(255, 255, 255, 0.94);
-    color: #2a4a7a;
-    cursor: pointer;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
-    transition: background .2s ease, transform .15s ease;
-  }
-  body.page-flip-done .info-btn {
-    display: flex;
-  }
-  .info-btn:hover { background: #fff; }
-  .info-btn:active { transform: scale(0.96); }
-  .info-btn__icon { width: 22px; height: 22px; }
+  /* Legacy footer hooks — links live in .ui-rail */
+  .site-footer { display: none !important; }
 
   /* Info panel — paper checklist style */
   .info-panel {
@@ -423,8 +404,17 @@
   }
   .info-panel__close {
     position: absolute; top: 8px; right: 10px;
-    border: 0; background: none; font-size: 26px; line-height: 1;
-    color: #444; cursor: pointer; padding: 4px 8px;
+    width: var(--sketch-size);
+    height: var(--sketch-size);
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+  }
+  .info-panel__close .sketch-btn__face {
+    font-size: 22px;
+    line-height: 1;
+    color: var(--sketch-icon);
   }
   .info-panel__title {
     margin: 0 0 10px;
@@ -491,27 +481,69 @@
   #dialog .line { font-size: 17px; line-height: 1.45; min-height: 48px; }
   #dialog .next { margin-top: 8px; text-align: right; font-weight: 800; font-size: 13px; opacity: .6; }
 
-  /* Right controls */
-  #rcorner { position: absolute; right: 16px; bottom: 22px; display:flex; gap: 12px; align-items:flex-end; pointer-events: auto; }
-  .rbtn {
-    width: 56px; height: 56px; border-radius: 50%; border: 0; cursor: pointer; font-size: 26px;
-    background: rgba(255,255,255,.92); box-shadow: 0 8px 22px rgba(0,0,0,.18); display:flex; align-items:center; justify-content:center;
-  }
-  .rbtn:active { transform: scale(.94); }
-  #emojiRing { position: absolute; inset: 0; pointer-events: none; }
+  #rcorner { display: none !important; }
   .eitem {
-    position: absolute; width: 44px; height: 44px; border-radius: 50%; background:#fff; font-size: 22px;
-    display:flex; align-items:center; justify-content:center; box-shadow: 0 6px 14px rgba(0,0,0,.2);
-    transform: scale(0); transition: transform .25s cubic-bezier(.2,1.4,.4,1); pointer-events: auto; cursor: pointer;
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: scale(0);
+    transition: transform .25s cubic-bezier(.2,1.4,.4,1);
+    pointer-events: auto;
+    cursor: pointer;
+    color: var(--sketch-icon);
+  }
+  .eitem::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 4px;
+    width: 100%;
+    height: 100%;
+    background: var(--sketch-shadow);
+    border: 2px solid var(--sketch-ink);
+    border-radius: 3px 2px 4px 3px;
+    box-sizing: border-box;
+    z-index: 0;
+  }
+  .eitem__face {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background: var(--sketch-face);
+    border: 2px solid var(--sketch-ink);
+    border-radius: 2px 3px 3px 2px;
+    box-sizing: border-box;
   }
   .eitem.show { transform: scale(1); }
 
   /* Outfit panel */
   #outfit {
-    position: absolute; right: 16px; bottom: 90px; width: 240px; padding: 14px; opacity:0; pointer-events:none;
-    transform: translateY(12px); transition: opacity .2s, transform .2s;
+    position: fixed;
+    right: 82px;
+    top: 50%;
+    transform: translateY(-50%) translateY(12px);
+    width: 240px;
+    padding: 14px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s, transform .2s;
   }
-  #outfit.show { opacity:1; pointer-events:auto; transform: translateY(0); }
+  #outfit.show {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(-50%) translateY(0);
+  }
   #outfit h3 { margin: 0 0 10px; font-size: 15px; }
   .slot { margin-bottom: 10px; }
   .slot label { font-size: 12px; font-weight: 800; opacity:.7; display:block; margin-bottom:4px; }
@@ -532,8 +564,7 @@
   }
   #win h1 { font-size: 44px; margin:0; }
   #win .env { font-size: 70px; }
-  #win button { margin-top:8px; padding: 12px 30px; border:0; border-radius:99px; font-weight:800; font-size:16px; cursor:pointer;
-    background: linear-gradient(90deg,#FFD580,#FFD700); color:#2a1a0c; }
+  #win .sketch-btn--wide { width: auto; min-width: 200px; }
   #flash { position: fixed; left:50%; top:40%; transform:translate(-50%,-50%); font-size: 80px; opacity:0; z-index:30; pointer-events:none; }
   .hint { position:absolute; left:50%; bottom:90px; transform:translateX(-50%); font-size:12px; opacity:.6; color:#fff; text-shadow:0 1px 3px #000; }
   /* paper grain + subtle vignette for the painterly feel */
@@ -542,4 +573,10 @@
   #vig { position: fixed; inset:0; z-index: 14; pointer-events:none;
     background: radial-gradient(ellipse at 50% 42%, transparent 55%, rgba(40,30,20,.28)); }
   /* minimal HUD: hide the chips/buttons the way the reference keeps the screen clean */
-  #compass, #weather, #deliveries, #rcorner { display: none !important; }
+  #compass, #weather, #deliveries { display: none !important; }
+
+  @media (max-width: 520px) {
+    :root { --sketch-size: 48px; --sketch-offset: 4px; }
+    .ui-rail { right: 10px; gap: 9px; }
+    #outfit { right: 68px; width: min(240px, calc(100vw - 90px)); }
+  }

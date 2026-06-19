@@ -29,40 +29,64 @@ export function sanitizeNick(raw) {
 export function createNameTag(text, opts = {}) {
   const label = sanitizeNick(text);
   const local = !!opts.local;
+  const PAD_X = 28;
+  const PAD_Y = 18;
+  const font = '600 26px Nunito, "Segoe UI", system-ui, sans-serif';
   const cv = document.createElement('canvas');
   const ctx = cv.getContext('2d');
-  const font = 'bold 24px Nunito, system-ui, sans-serif';
-  ctx.font = font;
-  const tw = Math.min(240, Math.ceil(ctx.measureText(label).width) + 32);
-  cv.width = tw;
-  cv.height = 44;
-  const draw = (name) => {
-    ctx.clearRect(0, 0, cv.width, cv.height);
+
+  const measure = (name) => {
     ctx.font = font;
-    if (local) {
-      const g = ctx.createLinearGradient(4, 4, tw - 4, 36);
-      g.addColorStop(0, 'rgba(153, 69, 255, 0.85)');
-      g.addColorStop(1, 'rgba(20, 241, 149, 0.85)');
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.roundRect(3, 5, tw - 6, 32, 9);
-      ctx.fill();
-      ctx.fillStyle = 'rgba(8, 8, 12, 0.72)';
-      ctx.beginPath();
-      ctx.roundRect(5, 7, tw - 10, 28, 7);
-      ctx.fill();
-    } else {
-      ctx.fillStyle = 'rgba(8, 8, 12, 0.62)';
-      ctx.beginPath();
-      ctx.roundRect(4, 7, tw - 8, 30, 8);
-      ctx.fill();
-    }
-    ctx.fillStyle = '#f8f6f2';
+    return Math.min(300, Math.ceil(ctx.measureText(name).width) + PAD_X * 2);
+  };
+
+  const resize = (w) => {
+    cv.width = w;
+    cv.height = 52;
+  };
+
+  const draw = (name) => {
+    const tw = cv.width;
+    const th = cv.height;
+    const cx = tw / 2;
+    const cy = th / 2;
+    ctx.clearRect(0, 0, tw, th);
+    ctx.font = font;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(name, tw / 2, 22);
+
+    // Soft bloom — readability without a background plate.
+    ctx.shadowColor = local ? 'rgba(153, 69, 255, 0.5)' : 'rgba(0, 0, 0, 0.7)';
+    ctx.shadowBlur = local ? 14 : 10;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = local ? 0 : 1;
+    ctx.fillStyle = local ? 'rgba(200, 170, 255, 0.35)' : 'rgba(0, 0, 0, 0.45)';
+    ctx.fillText(name, cx, cy + 1);
+
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
+
+    // Thin stroke — crisp silhouette on bright sky / terrain.
+    ctx.lineWidth = local ? 2.5 : 2;
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = local ? 'rgba(12, 8, 28, 0.72)' : 'rgba(8, 8, 12, 0.78)';
+    ctx.strokeText(name, cx, cy);
+
+    if (local) {
+      const g = ctx.createLinearGradient(cx - tw * 0.35, cy, cx + tw * 0.35, cy);
+      g.addColorStop(0, '#ddd0ff');
+      g.addColorStop(0.45, '#ffffff');
+      g.addColorStop(1, '#a8f5dc');
+      ctx.fillStyle = g;
+    } else {
+      ctx.fillStyle = '#f6f4ef';
+    }
+    ctx.fillText(name, cx, cy);
   };
+
+  resize(measure(label));
   draw(label);
+
   const tex = new THREE.CanvasTexture(cv);
   tex.minFilter = THREE.LinearFilter;
   tex.magFilter = THREE.LinearFilter;
@@ -71,16 +95,24 @@ export function createNameTag(text, opts = {}) {
     transparent: true,
     depthTest: true,
     depthWrite: false,
-    alphaTest: 0.04,
+    alphaTest: 0.02,
   }));
-  sp.scale.set(local ? 1.5 : 1.4, local ? 0.46 : 0.44, 1);
-  sp.position.y = CHAR_HEIGHT * 0.94;
+  const aspect = cv.width / cv.height;
+  const h = local ? 0.19 : 0.17;
+  sp.scale.set(h * aspect, h, 1);
+  sp.position.y = CHAR_HEIGHT * 1.06;
   sp.renderOrder = 999;
   sp.userData.label = label;
   sp.userData.setText = (t) => {
     const next = sanitizeNick(t);
     if (next === sp.userData.label) return;
     sp.userData.label = next;
+    const w = measure(next);
+    if (w !== cv.width) {
+      resize(w);
+      const a = cv.width / cv.height;
+      sp.scale.set(h * a, h, 1);
+    }
     draw(next);
     tex.needsUpdate = true;
   };

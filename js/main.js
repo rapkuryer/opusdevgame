@@ -48,15 +48,15 @@ window.__cam=camera;   // debug
 const followCam = createFollowCamera(camera, { dispXRange: Math.PI * 0.62 });
 
 function initSiteFooter() {
-  const footer = document.getElementById('siteFooter');
-  if (!footer) return;
-  const tw = footer.querySelector('[data-link="twitter"]');
-  const tc = footer.querySelector('[data-link="twitterCoin"]');
-  const ory = footer.querySelector('[data-link="orynth"]');
-  const pf = footer.querySelectorAll('[data-link="pumpfun"]');
+  const rail = document.getElementById('uiRail');
+  if (!rail) return;
+  const tw = rail.querySelector('[data-link="twitter"]');
+  const tc = rail.querySelector('[data-link="twitterCoin"]');
+  const ory = rail.querySelectorAll('[data-link="orynth"]');
+  const pf = document.querySelectorAll('[data-link="pumpfun"]');
   if (tw) tw.href = SITE_LINKS.twitter;
   if (tc) tc.href = SITE_LINKS.twitterCoin;
-  if (ory) ory.href = SITE_LINKS.orynth;
+  ory.forEach((el) => { el.href = SITE_LINKS.orynth; });
   pf.forEach((el) => { el.href = SITE_LINKS.pumpfun; });
   document.querySelectorAll('#infoPanel [data-link="twitter"]').forEach((el) => {
     el.href = SITE_LINKS.twitter;
@@ -1791,7 +1791,8 @@ const ring=document.getElementById('emojiRing');
 const emojiFX=[];
 let ringOpen=false;
 EMOJIS.forEach((em,i)=>{
-  const b=document.createElement('button'); b.className='eitem'; b.textContent=em;
+  const b=document.createElement('button'); b.className='eitem';
+  b.innerHTML = `<span class="eitem__face">${em}</span>`;
   const ang=(-90 - i*(360/EMOJIS.length))*Math.PI/180, r=92;
   b.dataset.x=Math.cos(ang)*r; b.dataset.y=Math.sin(ang)*r;
   b.style.right='6px'; b.style.bottom='6px';
@@ -1840,6 +1841,8 @@ function rebuildPlayer(){
 // Audio (Web Audio, simple synth — no asset files needed)
 // ---------------------------------------------------------------------------
 let actx=null;
+let musicOn = true;
+let musicTimer = null;
 function pop(type){
   if(!actx) return;
   const t=actx.currentTime, o=actx.createOscillator(), g=actx.createGain();
@@ -1857,10 +1860,11 @@ function pop(type){
 }
 function startAmbientMusic(){
   if(!actx) return;
+  if (musicTimer) clearInterval(musicTimer);
   const notes=[261.6,329.6,392,261.6,349.2,440,329.6,392];
   let i=0;
-  setInterval(()=>{
-    if(actx.state!=='running') return;
+  musicTimer = setInterval(()=>{
+    if(!musicOn || actx.state!=='running') return;
     const t=actx.currentTime, o=actx.createOscillator(), g=actx.createGain();
     o.type='sine'; o.frequency.value=notes[i++%notes.length];
     o.connect(g); g.connect(actx.destination);
@@ -1868,6 +1872,11 @@ function startAmbientMusic(){
     o.start(t); o.stop(t+1.7);
   }, 700);
 }
+document.getElementById('btnMusic')?.addEventListener('click', () => {
+  musicOn = !musicOn;
+  const btn = document.getElementById('btnMusic');
+  btn?.setAttribute('aria-pressed', musicOn ? 'true' : 'false');
+});
 
 // ---------------------------------------------------------------------------
 // UFO easter egg
@@ -2245,12 +2254,12 @@ async function initCharacterPhysics() {
 }
 
 function clearNickError() {
-  nickInput?.classList.remove('start-nick__input--error');
+  nickInput?.classList.remove('start-nick__input--error', 'sketch-field__input--error');
   if (nickHint) nickHint.textContent = '';
 }
 
 function showNickError(msg = 'Enter a nickname to play') {
-  nickInput?.classList.add('start-nick__input--error');
+  nickInput?.classList.add('start-nick__input--error', 'sketch-field__input--error');
   if (nickHint) nickHint.textContent = msg;
   nickInput?.focus();
 }
