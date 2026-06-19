@@ -69,25 +69,21 @@
 </div>
 
 <aside id="uiRail" class="ui-rail" aria-label="Game controls and links">
-  <button id="btnMusic" class="sketch-btn sketch-btn--tilt1" type="button" aria-label="Toggle music" aria-pressed="true">
-    <span class="sketch-btn__face">
-      <svg class="sketch-btn__icon" viewBox="0 0 24 24" aria-hidden="true">
-        <path fill="currentColor" stroke="#1a1a1a" stroke-width="1.1" stroke-linejoin="round" d="M9 18V7l9-2v11"/>
-        <circle cx="7.5" cy="18" r="2.5" fill="currentColor" stroke="#1a1a1a" stroke-width="1.1"/>
-        <circle cx="16.5" cy="16" r="2.5" fill="currentColor" stroke="#1a1a1a" stroke-width="1.1"/>
-      </svg>
-    </span>
-  </button>
-  <button id="btnOutfit" class="sketch-btn sketch-btn--tilt2" type="button" aria-label="Wardrobe">
-    <span class="sketch-btn__face">
-      <svg class="sketch-btn__icon" viewBox="0 0 24 24" aria-hidden="true">
-        <path fill="currentColor" stroke="#1a1a1a" stroke-width="1.1" stroke-linejoin="round" d="M12 4c-2.2 0-3.8 1.4-4.5 2.8L5 8v3h2v9h10v-9h2V8l-2.5-1.2C15.8 5.4 14.2 4 12 4zm0 2c1 0 1.8.6 2.2 1.3L15.5 9H16v10H8V9h.5l1.3-.7C9.2 6.6 10 6 12 6z"/>
-      </svg>
-    </span>
-  </button>
-  <div class="ui-rail__emoji-wrap">
-    <div id="emojiRing"></div>
-    <button id="btnEmoji" class="sketch-btn sketch-btn--tilt3" type="button" aria-label="Emotes">
+  <div class="ui-rail__item">
+    <button id="btnMusic" class="sketch-btn sketch-btn--tilt1" type="button" aria-label="Toggle music" aria-pressed="true">
+      <span class="sketch-btn__face">
+        <svg class="sketch-btn__icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="currentColor" stroke="#1a1a1a" stroke-width="1.1" stroke-linejoin="round" d="M9 18V7l9-2v11"/>
+          <circle cx="7.5" cy="18" r="2.5" fill="currentColor" stroke="#1a1a1a" stroke-width="1.1"/>
+          <circle cx="16.5" cy="16" r="2.5" fill="currentColor" stroke="#1a1a1a" stroke-width="1.1"/>
+        </svg>
+      </span>
+    </button>
+    <span class="ui-rail__label">music</span>
+  </div>
+  <div class="ui-rail__item ui-rail__item--emoji" id="emojiBlock">
+    <div id="emojiRing" class="emoji-picker" aria-hidden="true"></div>
+    <button id="btnEmoji" class="sketch-btn sketch-btn--tilt3" type="button" aria-label="Emotes" aria-expanded="false">
       <span class="sketch-btn__face">
         <svg class="sketch-btn__icon" viewBox="0 0 24 24" aria-hidden="true">
           <path fill="currentColor" stroke="#1a1a1a" stroke-width="1.1" d="M12 3.5C8.8 3.5 6.5 6 6.5 8.8c0 .9.3 1.7.8 2.4-1.2.8-2 2.2-2 3.8 0 1.3.7 2.4 1.7 3-.9.7-1.5 1.8-1.5 3 0 2.2 2.8 3.5 6.5 3.5s6.5-1.3 6.5-3.5c0-1.2-.6-2.3-1.5-3 1-.6 1.7-1.7 1.7-3 0-1.6-.8-3-2-3.8.5-.7.8-1.5.8-2.4 0-2.8-2.3-5.3-5.5-5.3z"/>
@@ -97,21 +93,25 @@
         </svg>
       </span>
     </button>
+    <span class="ui-rail__label">emotes</span>
   </div>
-  <button id="btnInfo" class="sketch-btn sketch-btn--tilt4" type="button" aria-label="About OPUSDEV" aria-expanded="false" aria-controls="infoPanel">
-    <span class="sketch-btn__face">
-      <svg class="sketch-btn__icon" viewBox="0 0 24 24" aria-hidden="true">
-        <circle cx="5" cy="6" r="1.35" fill="currentColor" stroke="#1a1a1a" stroke-width="0.6"/>
-        <rect x="8.5" y="5" width="12" height="2" rx="1" fill="currentColor" stroke="#1a1a1a" stroke-width="0.6"/>
-        <circle cx="5" cy="12" r="1.35" fill="currentColor" stroke="#1a1a1a" stroke-width="0.6"/>
-        <rect x="8.5" y="11" width="12" height="2" rx="1" fill="currentColor" stroke="#1a1a1a" stroke-width="0.6"/>
-        <circle cx="5" cy="18" r="1.35" fill="currentColor" stroke="#1a1a1a" stroke-width="0.6"/>
-        <rect x="8.5" y="17" width="12" height="2" rx="1" fill="currentColor" stroke="#1a1a1a" stroke-width="0.6"/>
-      </svg>
-    </span>
-  </button>
+  <div class="ui-rail__item">
+    <button id="btnInfo" class="sketch-btn sketch-btn--tilt4" type="button" aria-label="About OPUSDEV" aria-expanded="false" aria-controls="infoPanel">
+      <span class="sketch-btn__face">
+        <svg class="sketch-btn__icon" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="5" cy="6" r="1.35" fill="currentColor" stroke="#1a1a1a" stroke-width="0.6"/>
+          <rect x="8.5" y="5" width="12" height="2" rx="1" fill="currentColor" stroke="#1a1a1a" stroke-width="0.6"/>
+          <circle cx="5" cy="12" r="1.35" fill="currentColor" stroke="#1a1a1a" stroke-width="0.6"/>
+          <rect x="8.5" y="11" width="12" height="2" rx="1" fill="currentColor" stroke="#1a1a1a" stroke-width="0.6"/>
+          <circle cx="5" cy="18" r="1.35" fill="currentColor" stroke="#1a1a1a" stroke-width="0.6"/>
+          <rect x="8.5" y="17" width="12" height="2" rx="1" fill="currentColor" stroke="#1a1a1a" stroke-width="0.6"/>
+        </svg>
+      </span>
+    </button>
+    <span class="ui-rail__label">info</span>
+  </div>
   <div class="ui-rail__sep" aria-hidden="true"></div>
-  <div class="ui-rail__link">
+  <div class="ui-rail__item">
     <a class="sketch-btn sketch-btn--tilt5" data-link="orynth" href="https://www.orynth.dev/projects/ilya-kalashnikov" target="_blank" rel="noopener noreferrer" title="OPUSDEV · $OPUSDEV on Solana">
       <span class="sketch-btn__face">
         <svg class="sketch-btn__icon" viewBox="0 0 397.7 311.7" aria-hidden="true">
@@ -121,7 +121,7 @@
     </a>
     <span class="ui-rail__label">$OPUSDEV</span>
   </div>
-  <div class="ui-rail__link">
+  <div class="ui-rail__item">
     <a class="sketch-btn sketch-btn--tilt6" data-link="twitter" href="https://x.com/0pusdev" target="_blank" rel="noopener noreferrer" title="@0pusdev on X">
       <span class="sketch-btn__face">
         <svg class="sketch-btn__icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" stroke="#1a1a1a" stroke-width="0.5" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
@@ -129,7 +129,7 @@
     </a>
     <span class="ui-rail__label">dev</span>
   </div>
-  <div class="ui-rail__link">
+  <div class="ui-rail__item">
     <a class="sketch-btn sketch-btn--tilt7" data-link="twitterCoin" href="https://x.com/gameopusdev" target="_blank" rel="noopener noreferrer" title="@gameopusdev · coin account">
       <span class="sketch-btn__face">
         <svg class="sketch-btn__icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" stroke="#1a1a1a" stroke-width="0.5" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
@@ -137,7 +137,7 @@
     </a>
     <span class="ui-rail__label">coin</span>
   </div>
-  <div class="ui-rail__link">
+  <div class="ui-rail__item">
     <a class="sketch-btn sketch-btn--tilt8 sketch-btn--text" data-link="orynth" href="https://www.orynth.dev/projects/ilya-kalashnikov" target="_blank" rel="noopener noreferrer" title="Orynth project">
       <span class="sketch-btn__face">Or</span>
     </a>
@@ -203,14 +203,6 @@
     <div class="name" id="dlgName">NPC</div>
     <div class="line" id="dlgLine">...</div>
     <div class="next">SPACE / TAP → NEXT</div>
-  </div>
-
-  <div id="outfit" class="card">
-    <h3>👚 Wardrobe</h3>
-    <div class="slot"><label>Skin</label><div class="swatches" data-slot="skin"></div></div>
-    <div class="slot"><label>Top</label><div class="swatches" data-slot="top"></div></div>
-    <div class="slot"><label>Bottom</label><div class="swatches" data-slot="bottom"></div></div>
-    <div class="slot"><label>Hat</label><div class="swatches" data-slot="hat"></div></div>
   </div>
 
   <div id="rcorner" hidden></div>
