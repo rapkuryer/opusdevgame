@@ -21,44 +21,33 @@ function tuneTexture(tex, anisotropy) {
   tex.needsUpdate = true;
 }
 
-/** Keep FBX textures — StandardMaterial + hard cel bands (no inverted-hull ink). */
+/** Tune loader-authored FBX materials in place — never replace (keeps skinning/maps intact). */
 export function applyOriginalCharacterMaterials(root, { anisotropy = 4 } = {}) {
   root.traverse((o) => {
     if (!o.isMesh && !o.isSkinnedMesh) return;
-    const upgrade = (src) => {
+    const tune = (src) => {
       if (!src) return src;
-      const mat = new THREE.MeshStandardMaterial({
-        map: src.map ?? null,
-        normalMap: src.normalMap ?? null,
-        color: src.color?.clone() ?? new THREE.Color(0xffffff),
-        roughness: 0.52,
-        metalness: 0.02,
-        emissive: new THREE.Color(0x2a2018),
-        emissiveIntensity: 0.28,
-        fog: false,
-      });
-      for (const key of ['map', 'normalMap', 'emissiveMap']) {
-        tuneTexture(mat[key], anisotropy);
+      tuneTexture(src.map, anisotropy);
+      tuneTexture(src.normalMap, anisotropy);
+      tuneTexture(src.emissiveMap, anisotropy);
+      if ('roughness' in src) src.roughness = 0.52;
+      if ('metalness' in src) src.metalness = 0.02;
+      if (src.emissive?.isColor) src.emissive.setHex(0x2a2018);
+      if ('emissiveIntensity' in src) {
+        src.emissiveIntensity = Math.max(src.emissiveIntensity ?? 0, 0.22);
       }
-      mat.onBeforeCompile = (shader) => {
-        shader.fragmentShader = shader.fragmentShader.replace(
-          '#include <dithering_fragment>',
-          `#include <dithering_fragment>
-          {
-            float lum = dot(outgoingLight, vec3(0.299, 0.587, 0.114));
-            float cel = step(0.30, lum);
-            vec3 shadowCol = vec3(0.035, 0.030, 0.028);
-            outgoingLight = mix(shadowCol, outgoingLight, cel);
-          }
-          outgoingLight = pow(outgoingLight, vec3(0.86));
-          outgoingLight *= 1.26;`,
-        );
-      };
-      mat.customProgramCacheKey = () => 'ch19-character-cel-v3';
-      mat.needsUpdate = true;
-      return mat;
+      src.fog = false;
+      src.transparent = false;
+      src.opacity = 1;
+      src.depthWrite = true;
+      src.side = THREE.FrontSide;
+      // Drop any custom shader hooks (broken outfit/cel patches made the mesh outline-only).
+      delete src.onBeforeCompile;
+      delete src.customProgramCacheKey;
+      src.needsUpdate = true;
+      return src;
     };
-    o.material = Array.isArray(o.material) ? o.material.map(upgrade) : upgrade(o.material);
+    o.material = Array.isArray(o.material) ? o.material.map(tune) : tune(o.material);
     o.castShadow = true;
     o.receiveShadow = false;
     o.frustumCulled = false;
@@ -77,19 +66,7 @@ export function applyMessengerCharacterMaterial(root, gradient) {
       } else if (m?.color) {
         mat.color.copy(m.color);
       }
-      mat.onBeforeCompile = (shader) => {
-        shader.fragmentShader = shader.fragmentShader.replace(
-          'vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + totalEmissiveRadiance;',
-          `vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + totalEmissiveRadiance;
-          {
-            float lum = max(max(outgoingLight.r, outgoingLight.g), outgoingLight.b);
-            float lit = step(0.22, lum);
-            vec3 shadowCol = vec3(0.028, 0.024, 0.032);
-            outgoingLight = mix(shadowCol, outgoingLight, lit);
-          }`,
-        );
-      };
-      mat.customProgramCacheKey = () => 'messenger-character-v1';
+      mat.customProgramCacheKey = () => 'messenger-character-v2';
       return mat;
     };
     o.material = Array.isArray(o.material) ? o.material.map(conv) : conv(o.material);
