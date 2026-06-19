@@ -12,6 +12,7 @@ import {
   connectPhantom, trySilentConnect, shortAddress, watchWalletDisconnect,
 } from './wallet.js';
 import { loadProfile, saveProfile } from './profile.js';
+import { applyFbxOutfitColors } from './characterMaterial.js';
 import { loadPlayerCharacter, warmRemotePool, isPlayerCharacterReady } from './playerCharacter.js';
 import { loadAbetoPlanet } from './planet.js';
 import { SITE_LINKS } from './siteLinks.js';
@@ -1015,6 +1016,35 @@ function makeCourier(outfit){
 // Player + controller
 // ---------------------------------------------------------------------------
 const outfit = { skin:0, top:0, bottom:0, hat:0 };
+const OUTFIT_STORAGE = 'opusdev_outfit_v1';
+
+function loadOutfit() {
+  try {
+    const raw = localStorage.getItem(OUTFIT_STORAGE);
+    if (!raw) return;
+    const o = JSON.parse(raw);
+    for (const k of ['skin', 'top', 'bottom', 'hat']) {
+      const n = o[k];
+      if (typeof n === 'number' && n >= 0 && n < PALETTE[k].length) outfit[k] = n;
+    }
+  } catch { /* ignore */ }
+}
+
+function saveOutfit() {
+  try { localStorage.setItem(OUTFIT_STORAGE, JSON.stringify(outfit)); }
+  catch { /* ignore */ }
+}
+
+function syncOutfitSwatches() {
+  document.querySelectorAll('#outfit .swatches').forEach((row) => {
+    const slot = row.dataset.slot;
+    row.querySelectorAll('.sw').forEach((sw, idx) => {
+      sw.classList.toggle('active', outfit[slot] === idx);
+    });
+  });
+}
+
+loadOutfit();
 const playerModelPlaceholder = new THREE.Group();
 playerModelPlaceholder.visible = false;
 let playerModel = playerModelPlaceholder;
@@ -1098,6 +1128,7 @@ async function initPlayerCharacter() {
   stripInkShells(playerModel);
   if (typeof refreshOutline === 'function') refreshOutline();
   characterReady = true;
+  applyPlayerOutfit();
   warmRemotePool(MAX_PLAYERS - 1);
   console.log('Capoeira player + animations loaded:', Object.keys(anim).join(', '));
   return loaded;
@@ -1822,12 +1853,25 @@ document.querySelectorAll('#outfit .swatches').forEach(row=>{
   PALETTE[slot].forEach((col,idx)=>{
     const s=document.createElement('div'); s.className='sw'+(outfit[slot]===idx?' active':'');
     s.style.background = (slot==='hat'&&idx===0)?'repeating-linear-gradient(45deg,#ddd,#ddd 4px,#fff 4px,#fff 8px)':'#'+col.toString(16).padStart(6,'0');
-    s.onclick=()=>{ outfit[slot]=idx; row.querySelectorAll('.sw').forEach(x=>x.classList.remove('active')); s.classList.add('active'); rebuildPlayer(); };
+    s.onclick=()=>{
+      outfit[slot]=idx;
+      row.querySelectorAll('.sw').forEach(x=>x.classList.remove('active'));
+      s.classList.add('active');
+      applyPlayerOutfit();
+    };
     row.appendChild(s);
   });
 });
-function rebuildPlayer(){
-  if (playerModel?.userData?.isFBX) return;
+syncOutfitSwatches();
+
+function applyPlayerOutfit() {
+  saveOutfit();
+  if (!playerModel) return;
+  if (playerModel.userData?.isFBX) {
+    applyFbxOutfitColors(playerModel, outfit, PALETTE);
+    if (typeof refreshOutline === 'function') refreshOutline();
+    return;
+  }
   player.remove(playerModel);
   playerModel = makeCourier(outfit);
   playerModel.visible = started;
@@ -1836,6 +1880,8 @@ function rebuildPlayer(){
   refreshOutline();
   if(heldParcel){ (playerModel.userData.holdAnchor||playerModel).add(heldParcel); }
 }
+
+function rebuildPlayer() { applyPlayerOutfit(); }
 
 // ---------------------------------------------------------------------------
 // Audio (Web Audio, simple synth — no asset files needed)
