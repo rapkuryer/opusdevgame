@@ -1,5 +1,5 @@
 // Public links — shown in-game footer and start screen.
-export const TOKEN_MINT = 'ENfSPZh5tGP9tjKQpJY3FArAq2UN4jn7MYDLQ4dCpump';
+export const TOKEN_MINT = '7Crtw8ZrFZCJnK9aX3rQvrMBV7S3mToXCcJpUqVZYory';
 
 export const SITE_LINKS = {
   site: 'https://opusdev.org',

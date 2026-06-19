@@ -7,10 +7,10 @@ On **PLAY**, the world **materializes block by block** — hills, streets, trees
 
 ## Solana
 
-OPUSDEV is a game on **Solana**. Community token **$OPUSDEV** is on [pump.fun](https://pump.fun/coin/ENfSPZh5tGP9tjKQpJY3FArAq2UN4jn7MYDLQ4dCpump).
+OPUSDEV is a game on **Solana**. Community token **$OPUSDEV** is on [pump.fun](https://pump.fun/coin/7Crtw8ZrFZCJnK9aX3rQvrMBV7S3mToXCcJpUqVZYory).
 
-- **Mint:** `ENfSPZh5tGP9tjKQpJY3FArAq2UN4jn7MYDLQ4dCpump`
-- **Trade:** [pump.fun/coin/ENfSPZh5…](https://pump.fun/coin/ENfSPZh5tGP9tjKQpJY3FArAq2UN4jn7MYDLQ4dCpump)
+- **Mint:** `7Crtw8ZrFZCJnK9aX3rQvrMBV7S3mToXCcJpUqVZYory`
+- **Trade:** [pump.fun/coin/7Crtw8Zr…](https://pump.fun/coin/7Crtw8ZrFZCJnK9aX3rQvrMBV7S3mToXCcJpUqVZYory)
 - **Updates:** [@gameopusdev on X](https://x.com/gameopusdev)
 
 Play in the browser — no wallet required to explore. The token is for the community around the game.
@@ -59,7 +59,7 @@ Up to **10 players** per room — same Capoeira character, nicknames above heads
 - Public docs: [github.com/rapkuryer/opusdev-docs](https://github.com/rapkuryer/opusdev-docs)
 - Developer: [@0pusdev on X](https://x.com/0pusdev)
 - Game: [@gameopusdev on X](https://x.com/gameopusdev)
-- **Coin (Solana):** [pump.fun](https://pump.fun/coin/ENfSPZh5tGP9tjKQpJY3FArAq2UN4jn7MYDLQ4dCpump) — `$OPUSDEV` · `ENfSPZh5tGP9tjKQpJY3FArAq2UN4jn7MYDLQ4dCpump`
+- **Coin (Solana):** [pump.fun](https://pump.fun/coin/7Crtw8ZrFZCJnK9aX3rQvrMBV7S3mToXCcJpUqVZYory) — `$OPUSDEV` · `7Crtw8ZrFZCJnK9aX3rQvrMBV7S3mToXCcJpUqVZYory`
 
 ## License
 
